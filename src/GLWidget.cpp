@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "GLWidget.h"
 
+extern vector<Point> points;
+
 // Initialisation de la scène OpenGL
 GLWidget::GLWidget(QWidget *parent) : QOpenGLWidget(parent)
 {

@@ -33,5 +33,12 @@ private:
 	QPoint mousePos;
 	QTimer *t_Timer;
 	QColor bgColor;
+
+	vector<Point> points;
+	vector<Side> sides;
+	vector<Face> faces;
+	unsigned int current_id_points = 0;
+	unsigned int current_id_sides = 0;
+	unsigned int current_id_faces = 0;
 };
 
