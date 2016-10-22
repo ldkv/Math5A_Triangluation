@@ -13,6 +13,8 @@ public:
 	Math5A_Triangulation(QWidget *parent = 0);
 	~Math5A_Triangulation();
 
+	void resetCamera();
+
 private slots:
 
 private:

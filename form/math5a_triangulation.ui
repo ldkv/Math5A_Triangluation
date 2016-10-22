@@ -26,7 +26,7 @@
      <x>0</x>
      <y>0</y>
      <width>1510</width>
-     <height>31</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>
@@ -48,9 +48,9 @@
      <item>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
-        <widget class="QPushButton" name="config3">
+        <widget class="QPushButton" name="resetCam">
          <property name="text">
-          <string>Config1222</string>
+          <string>Reset Camera</string>
          </property>
         </widget>
        </item>

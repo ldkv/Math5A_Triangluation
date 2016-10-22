@@ -4,9 +4,24 @@
 
 #include "AlgoMath.h"
 
+#include <vector>
+
 using namespace std;
 
 #define POINT_SIZE 10
+
+
+
+
+#include <QGLWidget>
+#include <QVector2D>
+
+const float pi = 3.141592653f;
+const float twoPi = 2.0f * pi;
+const float piBy2 = 0.5f * pi;
+const float degToRad = pi / 180.0f;
+const float radToDeg = 180.0f / pi;
+
 
 class GLWidget : public QOpenGLWidget
 {
@@ -18,10 +33,17 @@ public:
 	void paintGL();
 	~GLWidget();
 
+	void resetCamera();
+
 protected:
 	void mousePressEvent(QMouseEvent *event);
 	void mouseMoveEvent(QMouseEvent *event);
 	void mouseReleaseEvent(QMouseEvent *event);
+	virtual void keyPressEvent(QKeyEvent* e);
+
+	// Dessiner des côtés à partir des points
+	void drawLines(vector<QVector3D> points);
+	void drawPoints(vector<QVector3D> points);
 
 public slots:
 	void timeOutSlot();
@@ -33,5 +55,22 @@ private:
 	QPoint mousePos;
 	QTimer *t_Timer;
 	QColor bgColor;
+
+	vector<QVector3D> points;
+
+	float m_theta; // Rotation x-axis
+	float m_phi; // Rotation  y-axis
+	float m_aspectRatio;
+	bool mouseLook;
+	QPoint rotValue;
+	QPoint tmpMousePos;
+	QPoint tmpRotValue;
+
+	int screenW;
+	int screenH;
 };
+
+
+
+
 

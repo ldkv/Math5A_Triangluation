@@ -7,10 +7,16 @@ Math5A_Triangulation::Math5A_Triangulation(QWidget *parent)
 	ui.setupUi(this);
 	glScene = new GLWidget(this);
 	ui.centralLayout->addWidget(glScene);
-	//connect(ui.config1, SIGNAL(clicked()), this, SLOT(newForm()));
+	connect(ui.resetCam, SIGNAL(clicked()), this, SLOT(resetCamera()));
 }
 
 Math5A_Triangulation::~Math5A_Triangulation()
 {
 
+}
+
+void Math5A_Triangulation::resetCamera()
+{
+	glScene->resetCamera();
+	QApplication::setOverrideCursor(Qt::PointingHandCursor);
 }
