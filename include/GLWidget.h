@@ -42,8 +42,8 @@ protected:
 	virtual void keyPressEvent(QKeyEvent* e);
 
 	// Dessiner des côtés à partir des points
-	void drawLines(vector<QVector3D> points);
-	void drawPoints(vector<QVector3D> points);
+	void drawPoints(vector<Point> points);
+	void drawLines(vector<Point> points);
 
 public slots:
 	void timeOutSlot();
@@ -56,8 +56,6 @@ private:
 	QTimer *t_Timer;
 	QColor bgColor;
 
-	vector<QVector3D> points;
-
 	float m_theta; // Rotation x-axis
 	float m_phi; // Rotation  y-axis
 	float m_aspectRatio;
@@ -68,6 +66,13 @@ private:
 
 	int screenW;
 	int screenH;
+
+	vector<Point> points;
+	vector<Side> sides;
+	vector<Face> faces;
+	unsigned int current_id_points = 0;
+	unsigned int current_id_sides = 0;
+	unsigned int current_id_faces = 0;
 };
 
 

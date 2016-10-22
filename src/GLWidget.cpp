@@ -5,6 +5,7 @@
 #include <QKeyEvent>
 #include <math.h>
 
+extern vector<Point> points;
 
 // Initialisation de la scène OpenGL
 GLWidget::GLWidget(QWidget *parent) :
@@ -138,7 +139,7 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
 {
 	if (event->buttons() & Qt::LeftButton)
 	{
-		points.push_back(QVector3D(((float)event->pos().x() - screenW/2)/4.55, ((float)event->pos().y()-screenH /2)/4.55, 0));
+		points.push_back(Point(QVector3D(((float)event->pos().x() - screenW/2)/4.55, ((float)event->pos().y()-screenH /2)/4.55, 0)));
 		qDebug() << event->pos().x() << " " << event->pos().y();
 		update();
 	}
@@ -190,7 +191,7 @@ void GLWidget::mouseReleaseEvent(QMouseEvent *event)
 }
 
 // Dessiner des côtés à partir des points
-void GLWidget::drawLines(vector<QVector3D> points)
+void GLWidget::drawLines(vector<Point> points)
 {
 	int nbPoints = points.size();
 	if (nbPoints < 2)
@@ -198,12 +199,12 @@ void GLWidget::drawLines(vector<QVector3D> points)
 	glColor3f(150.0f, 150.0f, 150.0f);
 	glBegin(GL_LINE_STRIP);
 	for (int i = 0; i < nbPoints; i++)
-		glVertex2i(points[i].x(), points[i].y());
+		glVertex3f(points[i].coord.x(), points[i].coord.y(), points[i].coord.z());
 	glEnd();
 }
 
 // Dessiner des points
-void GLWidget::drawPoints(vector<QVector3D> points)
+void GLWidget::drawPoints(vector<Point> points)
 {
 	int nbPoints = points.size();
 	if (nbPoints == 0)
@@ -212,7 +213,7 @@ void GLWidget::drawPoints(vector<QVector3D> points)
 	glPointSize(POINT_SIZE);
 	glBegin(GL_POINTS);
 	for (int i = 0; i < nbPoints; i++)
-		glVertex3i(points[i].x(), points[i].y(), points[i].z());
+		glVertex3f(points[i].coord.x(), points[i].coord.y(), points[i].coord.z());
 	glEnd();
 }
 
