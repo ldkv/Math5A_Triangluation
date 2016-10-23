@@ -3,9 +3,9 @@
 
 #include <algorithm>  
 
-Point* getPointfromID(vector<Point> pts, int id)
+Point *getPointfromID(vector<Point> pts, int id)
 {
-	for (int i = 1; i < pts.size(); i++)
+	for (int i = 0; i < pts.size(); i++)
 	{
 		if (pts[i].id == id)
 			return &pts[i];
@@ -13,39 +13,62 @@ Point* getPointfromID(vector<Point> pts, int id)
 	return nullptr;
 }
 
-vector<Point> EnvelopeJarvis(vector<Point> pts)
+vector<QVector3D> EnvelopeJarvis(vector<Point> pts)
 {
-	vector<Point> poly;
-
-	if (pts.size() <= 0)
+	vector<QVector3D> poly;
+	int N = pts.size();
+	if (N <= 0)
 		return poly;
 	
-	float minX = pts[0].coord.x(), minY = pts[0].coord.y();
-	int minID = pts[0].id;
-	for (int i = 1; i < pts.size(); i++)
+	QVector3D minPoint = pts[0].coord;
+	int i0 = 0;
+	for (int i = 1; i < N; i++)
 	{
-		if (pts[i].coord.x() < minX || (pts[i].coord.x() == minX && pts[i].coord.y() < minY))
+		if (pts[i].coord.x() < minPoint.x() || (pts[i].coord.x() == minPoint.x() && pts[i].coord.y() < minPoint.y()))
 		{
-			minX = pts[i].coord.x();
-			minY = pts[i].coord.y();
-			minID = pts[i].id;
+			minPoint = pts[i].coord;
+			i0 = i;
 		}
 	}
 
-	QLineF d(0, 0, 0, -1);
-	int i = minID;
+	QLineF v(0, 0, 0, -1);
+	int i = i0;
 	do
 	{
-		Point Pi = *getPointfromID(pts, i);
-		poly.push_back(Pi);
+		Point Pi = pts[i];
+		poly.push_back(Pi.coord);
+		if (N <= 1)
+			break;
+		// recherche du point suivant
+		// initialisation de angle_min et lmax avec le premier point d'indice différent de i
 		int j = (i == 0) ? 1 : 0;
 		QLineF PiPj(Pi.coord.x(), Pi.coord.y(), pts[j].coord.x(), pts[j].coord.y());
-		qreal angle_min = d.angleTo(PiPj);
-
-
-	} while (true);
-	
+		qreal angle_min = v.angleTo(PiPj);
+		float lmax = Pi.coord.distanceToPoint(pts[j].coord);
+		int inew = j;
+		// recherche du point le plus proche
+		for (j = inew + 1; j < N; j++)
+		{
+			if (j != i)
+			{
+				PiPj = QLineF(Pi.coord.x(), Pi.coord.y(), pts[j].coord.x(), pts[j].coord.y());
+				qreal angle = v.angleTo(PiPj);
+				float l = Pi.coord.distanceToPoint(pts[j].coord);
+				if (angle_min > angle || (angle_min == angle && lmax < l))
+				{
+					angle_min = angle;
+					lmax = l;
+					inew = j;
+				}
+			}
+		}
+		// mise à jour du pivot et du vecteur directeur
+		v = QLineF(pts[i].coord.x(), pts[i].coord.y(), pts[inew].coord.x(), pts[inew].coord.y());
+		i = inew;
+	} while (i != i0);
+	return poly;	
 }
+
 bool coordsSort(Point i, Point j) { return (i.coord.x()==j.coord.x() ? i.coord.y() < j.coord.y() : i.coord.x() < j.coord.x()); }
 
 /*QVector3D calculVector(Point p1, Point p2)
