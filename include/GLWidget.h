@@ -39,6 +39,7 @@ protected:
 	void mousePressEvent(QMouseEvent *event);
 	void mouseMoveEvent(QMouseEvent *event);
 	void mouseReleaseEvent(QMouseEvent *event);
+	int findNearestPoint(QPoint p);
 	virtual void keyPressEvent(QKeyEvent* e);
 
 	// Dessiner des côtés à partir des points
@@ -73,6 +74,8 @@ private:
 	unsigned int current_id_points = 0;
 	unsigned int current_id_sides = 0;
 	unsigned int current_id_faces = 0;
+
+	int pointSelected;
 };
 
 

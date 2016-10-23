@@ -52,6 +52,9 @@
          <property name="text">
           <string>Reset Camera</string>
          </property>
+         <property name="checkable">
+          <bool>false</bool>
+         </property>
         </widget>
        </item>
        <item>

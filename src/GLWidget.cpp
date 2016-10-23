@@ -86,7 +86,7 @@ void GLWidget::paintGL()
 
 	glPushMatrix();
 	glRotatef(m_theta, 1.0f, 0.0f, 0.0f);
-	glRotatef(m_phi, 0.0f, 1.0f, 0.0f);
+	glRotatef(m_phi, 0.0f, 0.0f, 1.0f);
 
 	// Grid
 
@@ -137,15 +137,21 @@ void GLWidget::paintGL()
 // Callback pour les click de la souris
 void GLWidget::mousePressEvent(QMouseEvent *event)
 {
+	pointSelected = findNearestPoint(event->pos());
 	if (event->buttons() & Qt::LeftButton)
 	{
-		points.push_back(Point(QVector3D(((float)event->pos().x() - screenW/2)/4.55, ((float)event->pos().y()-screenH /2)/4.55, 0)));
-		qDebug() << event->pos().x() << " " << event->pos().y();
-		update();
+		if (pointSelected == -1) {
+			points.push_back(Point(QVector3D(((float)event->pos().x() - screenW / 2) / 4.55, ((float)event->pos().y() - screenH / 2) / 4.55, 0)));
+			qDebug() << event->pos().x() << " " << event->pos().y();
+			update();
+		}
 	}
 	else if (event->buttons() & Qt::RightButton)
 	{
-		
+		if (pointSelected != -1) {
+			points.erase(points.begin()+pointSelected);
+			update();
+		}
 	}
 }
 
@@ -156,7 +162,11 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 	emit MouseMoved();
 	if (event->buttons() & Qt::LeftButton)
 	{
-		
+		if (pointSelected >= 0)
+		{
+			points[pointSelected] = Point(QVector3D(((float)event->pos().x() - screenW / 2) / 4.55, ((float)event->pos().y() - screenH / 2) / 4.55, 0));
+			update();
+		}
 	}
 
 	// is the middle mouse button down?
@@ -184,10 +194,22 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 // Callback pour la relâche de la souris
 void GLWidget::mouseReleaseEvent(QMouseEvent *event)
 {
-	if (event->button() == Qt::LeftButton)
+	if (event->button() == Qt::LeftButton && pointSelected >= 0)
 	{
-
+		update();
 	}
+}
+
+int GLWidget::findNearestPoint(QPoint p)
+{
+	int nbPoints = points.size();
+	for (int i = 0; i < nbPoints; i++)
+	{
+		QPoint d = QPoint((p.x() - screenW / 2) / 4.55, (p.y()-screenH / 2) / 4.55) - QPoint(points[i].coord.x(), points[i].coord.y());
+		if (sqrt(pow(d.x(), 2) + pow(d.y(), 2) <= POINT_SIZE*4))
+			return i;
+	}
+	return -1;
 }
 
 // Dessiner des côtés à partir des points
@@ -226,22 +248,22 @@ void GLWidget::keyPressEvent(QKeyEvent* e)
 		break;
 
 	case Qt::Key_Left:
-		m_phi += 1.0f;
+		m_phi += 2.0f;
 		update();
 		break;
 
 	case Qt::Key_Right:
-		m_phi -= 1.0f;
+		m_phi -= 2.0f;
 		update();
 		break;
 
 	case Qt::Key_Up:
-		m_theta += 1.0f;
+		m_theta += 2.0f;
 		update();
 		break;
 
 	case Qt::Key_Down:
-		m_theta -= 1.0f;
+		m_theta -= 2.0f;
 		update();
 		break;
 	}
