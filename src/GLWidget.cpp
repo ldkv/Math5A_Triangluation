@@ -4,6 +4,7 @@
 #include <QDebug>
 #include <QKeyEvent>
 #include <math.h>
+#include "AlgoMath.h"
 
 extern vector<Point> points;
 
@@ -128,6 +129,7 @@ void GLWidget::paintGL()
 	glEnd();
 
 	// Points
+	drawLines(points, TriangulationSimple(points));
 
 	drawPoints(points);
 
@@ -213,15 +215,19 @@ int GLWidget::findNearestPoint(QPoint p)
 }
 
 // Dessiner des côtés à partir des points
-void GLWidget::drawLines(vector<Point> points)
+void GLWidget::drawLines(vector<Point> points, vector<Side> sides)
 {
-	int nbPoints = points.size();
-	if (nbPoints < 2)
+	int nbPoints = sides.size();
+	if (nbPoints == 0)
 		return;
 	glColor3f(150.0f, 150.0f, 150.0f);
-	glBegin(GL_LINE_STRIP);
-	for (int i = 0; i < nbPoints; i++)
-		glVertex3f(points[i].coord.x(), points[i].coord.y(), points[i].coord.z());
+	glBegin(GL_LINES);
+	for (int i = 0; i < nbPoints; i++) {
+		int indexP1 = getPointIndex(points, sides[i].pLow);
+		int indexP2 = getPointIndex(points, sides[i].pHigh);
+		glVertex3f(points.at(indexP1).coord.x(), points.at(indexP1).coord.y(), points.at(indexP1).coord.z());
+		glVertex3f(points.at(indexP2).coord.x(), points.at(indexP2).coord.y(), points.at(indexP2).coord.z());
+	}
 	glEnd();
 }
 

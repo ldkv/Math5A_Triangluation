@@ -4,6 +4,8 @@
 
 using namespace std;
 
+static int globalId = 0;
+
 struct Point
 {
 	int id;
@@ -18,6 +20,7 @@ struct Point
 	Point(QVector3D pt)
 	{
 		coord = pt;
+		id = globalId++;
 	}
 };
 
@@ -28,6 +31,12 @@ struct Side
 	int pHigh;
 	int fLeft;
 	int fRight;
+
+	Side(int h, int l)
+	{
+		pLow = l;
+		pHigh = h;
+	}
 };
 
 struct Face
@@ -35,3 +44,6 @@ struct Face
 	int id;
 	vector<int> sides;
 };
+
+vector<Side> TriangulationSimple(vector<Point> pts);
+int getPointIndex(vector<Point> pts, int id);

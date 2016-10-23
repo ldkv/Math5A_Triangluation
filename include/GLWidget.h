@@ -40,11 +40,12 @@ protected:
 	void mouseMoveEvent(QMouseEvent *event);
 	void mouseReleaseEvent(QMouseEvent *event);
 	int findNearestPoint(QPoint p);
+
 	virtual void keyPressEvent(QKeyEvent* e);
 
 	// Dessiner des côtés à partir des points
 	void drawPoints(vector<Point> points);
-	void drawLines(vector<Point> points);
+	void drawLines(vector<Point> points, vector<Side> sides);
 
 public slots:
 	void timeOutSlot();
