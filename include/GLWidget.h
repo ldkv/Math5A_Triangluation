@@ -46,6 +46,7 @@ protected:
 	// Dessiner des côtés à partir des points
 	void drawPoints(vector<Point> points);
 	void drawLines(vector<Point> points, vector<Side> sides);
+	void drawLinesStrip(vector<QVector3D> points);
 
 public slots:
 	void timeOutSlot();

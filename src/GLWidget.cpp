@@ -129,7 +129,8 @@ void GLWidget::paintGL()
 	glEnd();
 
 	// Points
-	drawLines(points, TriangulationSimple(points));
+	//drawLines(points, TriangulationSimple(points));
+	drawLinesStrip(EnvelopeJarvis(points));
 
 	drawPoints(points);
 
@@ -214,6 +215,20 @@ int GLWidget::findNearestPoint(QPoint p)
 	return -1;
 }
 
+void GLWidget::drawLinesStrip(vector<QVector3D> pts)
+{
+	int nbPoints = pts.size();
+	if (nbPoints == 0)
+		return;
+	glColor3f(150.0f, 150.0f, 150.0f);
+	glBegin(GL_LINE_LOOP);
+	for (int i = 0; i < nbPoints; i++) 
+	{
+		glVertex3f(pts[i].x(), pts[i].y(), pts[i].z());
+	}
+	glEnd();
+}
+
 // Dessiner des côtés à partir des points
 void GLWidget::drawLines(vector<Point> points, vector<Side> sides)
 {
@@ -222,7 +237,8 @@ void GLWidget::drawLines(vector<Point> points, vector<Side> sides)
 		return;
 	glColor3f(150.0f, 150.0f, 150.0f);
 	glBegin(GL_LINES);
-	for (int i = 0; i < nbPoints; i++) {
+	for (int i = 0; i < nbPoints; i++) 
+	{
 		int indexP1 = getPointIndex(points, sides[i].pLow);
 		int indexP2 = getPointIndex(points, sides[i].pHigh);
 		glVertex3f(points.at(indexP1).coord.x(), points.at(indexP1).coord.y(), points.at(indexP1).coord.z());

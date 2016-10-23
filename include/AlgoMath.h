@@ -45,5 +45,7 @@ struct Face
 	vector<int> sides;
 };
 
+Point *getPointfromID(vector<Point> pts, int id);
+vector<QVector3D> EnvelopeJarvis(vector<Point> pts);
 vector<Side> TriangulationSimple(vector<Point> pts);
 int getPointIndex(vector<Point> pts, int id);
