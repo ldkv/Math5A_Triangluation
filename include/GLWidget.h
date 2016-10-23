@@ -47,6 +47,8 @@ protected:
 	void drawPoints(vector<Point> points);
 	void drawLines(vector<Point> points, vector<Side> sides);
 
+	void drawPoly(vector<Point> points);
+
 public slots:
 	void timeOutSlot();
 
@@ -68,6 +70,7 @@ private:
 
 	int screenW;
 	int screenH;
+	double range;
 
 	vector<Point> points;
 	vector<Side> sides;

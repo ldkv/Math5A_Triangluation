@@ -11,6 +11,10 @@ struct Point
 	int id;
 	QVector3D coord;
 	vector<int> sides;
+	Point() 
+	{
+		id = globalId++;
+	};
 	Point(int idi, QVector3D pt, vector<int> s)
 	{
 		id = idi;
@@ -47,3 +51,5 @@ struct Face
 
 vector<Side> TriangulationSimple(vector<Point> pts);
 int getPointIndex(vector<Point> pts, int id);
+//vector<Side> GrahamScan(vector<Point> pts);
+vector<Point> GrahamScan(vector<Point> pts);

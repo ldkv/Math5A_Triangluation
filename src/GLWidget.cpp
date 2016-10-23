@@ -54,15 +54,12 @@ void GLWidget::resizeGL(int width, int height)
 	if (height == 0)
 		height = 1;
 
-	// Set the viewport to window dimensions
 	glViewport(0, 0, width, height);
 
-	// reset the coordinate system
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
-	// Establish the clipping volume by setting up an orthographic projection
-	double range = 100.0;
+	range = 100.0;
 	m_aspectRatio = double(width) / double(height);
 	//gluOrtho2D(0, width, height, 0);
 	if (width <= height)
@@ -72,6 +69,8 @@ void GLWidget::resizeGL(int width, int height)
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+
+	qDebug() << width << " " << height;
 }
 
 // Fonction mettre à jour de la scène OpenGL
@@ -92,7 +91,7 @@ void GLWidget::paintGL()
 	// Grid
 
 	glBegin(GL_LINES);
-	glColor3f(0.2, 0.2, 0.2);
+	glColor3f(0.1, 0.1, 0.1);
 	for (float x = -100; x < 100; x += 5)
 	{
 		glVertex3d(x, -100, 0);
@@ -100,7 +99,7 @@ void GLWidget::paintGL()
 	}
 	glEnd();
 	glBegin(GL_LINES);
-	glColor3f(0.5, 0.5, 0.5);
+	glColor3f(0.1, 0.1, 0.1);
 	for (float z = -100; z < 100; z += 5)
 	{
 		glVertex3d(-100, z, 0);
@@ -130,6 +129,7 @@ void GLWidget::paintGL()
 
 	// Points
 	drawLines(points, TriangulationSimple(points));
+	drawPoly(GrahamScan(points));
 
 	drawPoints(points);
 
@@ -143,8 +143,9 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
 	if (event->buttons() & Qt::LeftButton)
 	{
 		if (pointSelected == -1) {
-			points.push_back(Point(QVector3D(((float)event->pos().x() - screenW / 2) / 4.55, ((float)event->pos().y() - screenH / 2) / 4.55, 0)));
-			qDebug() << event->pos().x() << " " << event->pos().y();
+			points.push_back(Point(QVector3D((int)(((float)event->pos().x() - screenW / 2) / 4.55), (int)(((float)event->pos().y() - screenH / 2) / 4.55), 0)));
+			//points.push_back(Point(QVector3D((int)((float)event->pos().x() * 2.0 * range / screenW - range), (int)((float)-event->pos().y() * 2.0 * range / screenH + range), 0)));
+			qDebug() << ((float)event->pos().x() - screenW / 2) / 4.55 << " " << ((float)event->pos().y() - screenH / 2) / 4.55;
 			update();
 		}
 	}
@@ -166,7 +167,7 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 	{
 		if (pointSelected >= 0)
 		{
-			points[pointSelected] = Point(QVector3D(((float)event->pos().x() - screenW / 2) / 4.55, ((float)event->pos().y() - screenH / 2) / 4.55, 0));
+			points[pointSelected] = Point(QVector3D((int)(((float)event->pos().x() - screenW / 2) / 4.55), (int)(((float)event->pos().y() - screenH / 2) / 4.55), 0));
 			update();
 		}
 	}
@@ -227,6 +228,19 @@ void GLWidget::drawLines(vector<Point> points, vector<Side> sides)
 		int indexP2 = getPointIndex(points, sides[i].pHigh);
 		glVertex3f(points.at(indexP1).coord.x(), points.at(indexP1).coord.y(), points.at(indexP1).coord.z());
 		glVertex3f(points.at(indexP2).coord.x(), points.at(indexP2).coord.y(), points.at(indexP2).coord.z());
+	}
+	glEnd();
+}
+
+void GLWidget::drawPoly(vector<Point> points)
+{
+	int nbPoints = points.size();
+	if (nbPoints == 0)
+		return;
+	glColor3f(150.0f, 0.0f, 150.0f);
+	glBegin(GL_LINE_LOOP);
+	for (int i = 0; i < nbPoints; i++) {
+		glVertex3f(points[i].coord.x(), points[i].coord.y(), points[i].coord.z());
 	}
 	glEnd();
 }
