@@ -148,7 +148,7 @@ struct angleSort {
 		QLineF lj(pointsBarycenter.coord.x(), pointsBarycenter.coord.y(), j.coord.x(), j.coord.y());
 		float anglei = lx.angleTo(li);
 		float anglej = lx.angleTo(lj);
-		return anglei < anglej;
+		return anglei ==  anglej ? i.coord.distanceToPoint(pointsBarycenter.coord) < j.coord.distanceToPoint(pointsBarycenter.coord) : anglei < anglej;
 	}
 	Point pointsBarycenter;
 };
@@ -185,10 +185,42 @@ double angleSigned(QVector3D v1, QVector3D v2)
 	return angle * 180 / M_PI;
 }*/
 
+int nextIndexPoint(int currentIndex, int vectorSize) {
+	return (currentIndex+1 >= vectorSize ?  currentIndex+1 - vectorSize : currentIndex+1);
+}
+int previousIndexPoint(int currentIndex, int vectorSize) {
+	return (currentIndex-1 < 0 ? currentIndex-1 + vectorSize : currentIndex-1);
+}
+
 vector<Point> GrahamScan(vector<Point> pts) {
-	if (pts.size() > 0) {
+	if (pts.size() > 2) {
 		Point bary = barycenter(pts);
 		std::sort(pts.begin(), pts.end(), angleSort(bary));
+
+		vector<Point> L = pts;
+		//Point Sinit = L.at(0);
+		//Point pivot = Sinit;
+		int Sinit = 0;
+		int pivot = Sinit;
+		bool pass = false;
+		do
+		{
+			QLineF PiPj(L[pivot].coord.x(), L[pivot].coord.y(), L[nextIndexPoint(pivot, L.size())].coord.x(), L[nextIndexPoint(pivot, L.size())].coord.y());
+			QLineF PiPk(L[pivot].coord.x(), L[pivot].coord.y(), L[previousIndexPoint(pivot, L.size())].coord.x(), L[previousIndexPoint(pivot, L.size())].coord.y());
+			if (PiPk.angleTo(PiPj) > 180 )
+			{
+				pivot = nextIndexPoint(pivot, L.size());
+				pass = true;
+			}
+			else
+			{
+				L.erase(L.begin() + pivot);
+				Sinit = previousIndexPoint(pivot, L.size());
+				pivot = Sinit;
+				pass = false;
+			}
+		} while (pivot != Sinit || pass == false);
+		return L;
 	}
 	return pts;
 }

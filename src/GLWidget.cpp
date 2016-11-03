@@ -129,8 +129,8 @@ void GLWidget::paintGL()
 
 	// Points
 	drawLines(points, TriangulationSimple(points));
-	drawPoly(GrahamScan(points));
 	drawLinesStrip(EnvelopeJarvis(points));
+	drawPoly(GrahamScan(points));
 
 	drawPoints(points);
 
@@ -222,6 +222,7 @@ void GLWidget::drawLinesStrip(vector<QVector3D> pts)
 	if (nbPoints == 0)
 		return;
 	glColor3f(150.0f, 150.0f, 0);
+	glLineWidth(6);
 	glBegin(GL_LINE_LOOP);
 	for (int i = 0; i < nbPoints; i++) 
 	{
@@ -254,6 +255,7 @@ void GLWidget::drawPoly(vector<Point> points)
 	if (nbPoints == 0)
 		return;
 	glColor3f(150.0f, 0.0f, 150.0f);
+	glLineWidth(2);
 	glBegin(GL_LINE_LOOP);
 	for (int i = 0; i < nbPoints; i++) {
 		glVertex3f(points[i].coord.x(), points[i].coord.y(), points[i].coord.z());
