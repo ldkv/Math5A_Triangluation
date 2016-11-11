@@ -43,12 +43,12 @@ protected:
 
 	virtual void keyPressEvent(QKeyEvent* e);
 
+	// Dessiner la grille et les axes
+	void drawGridAxes();
 	// Dessiner des côtés à partir des points
 	void drawPoints(vector<Point> points);
 	void drawLines(vector<Point> points, vector<Side> sides);
-	void drawLinesStrip(vector<QVector3D> points);
-
-	void drawPoly(vector<Point> points);
+	void drawPoly(vector<Point> pts, QVector3D color, float width);
 
 public slots:
 	void timeOutSlot();

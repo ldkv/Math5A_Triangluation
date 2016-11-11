@@ -13,9 +13,40 @@ Point *getPointfromID(vector<Point> pts, int id)
 	return nullptr;
 }
 
-vector<QVector3D> EnvelopeJarvis(vector<Point> pts)
+void Delaunay_addPoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &faces, QVector3D P)
 {
-	vector<QVector3D> poly;
+	if (faces.size() <= 0)
+	{
+		if (pts.size() < 1)
+		{
+			pts.push_back(Point(P));
+			return;
+		}
+		if (pts.size() == 1)
+		{
+			pts.push_back(Point(P));
+			sides.push_back(Side(pts[0].id, pts[1].id));
+			return;
+		}
+		else
+		{
+			if (Collinear(pts[0].coord - P, pts[0].coord - pts[1].coord))
+			{
+
+			}
+		}
+	}
+}
+
+bool Collinear(QVector3D v1, QVector3D v2)
+{
+	//return (v1.y()*v2.z() == v1.z()*v2.y() && v1.z()*v2.x() == v1.x()*v2.z() && v1.x()*v2.y() == v1.y()*v2.x());
+	return (QVector3D::crossProduct(v1, v2) == QVector3D(0, 0, 0));
+}
+
+vector<Point> EnveloppeJarvis(vector<Point> pts)
+{
+	vector<Point> poly;
 	int N = pts.size();
 	if (N <= 0)
 		return poly;
@@ -36,7 +67,7 @@ vector<QVector3D> EnvelopeJarvis(vector<Point> pts)
 	do
 	{
 		Point Pi = pts[i];
-		poly.push_back(Pi.coord);
+		poly.push_back(Pi);
 		if (N <= 1)
 			break;
 		// recherche du point suivant
@@ -66,6 +97,7 @@ vector<QVector3D> EnvelopeJarvis(vector<Point> pts)
 		v = QLineF(pts[i].coord.x(), pts[i].coord.y(), pts[inew].coord.x(), pts[inew].coord.y());
 		i = inew;
 	} while (i != i0);
+	/* BUG: boucle infinie quand il y a 2 points identiques dans la liste!!! */
 	return poly;	
 }
 

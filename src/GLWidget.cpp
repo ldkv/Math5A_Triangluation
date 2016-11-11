@@ -72,14 +72,9 @@ void GLWidget::resizeGL(int width, int height)
 
 	qDebug() << width << " " << height;
 }
-
-// Fonction mettre à jour de la scène OpenGL
-void GLWidget::paintGL()
+ 
+void GLWidget::drawGridAxes()
 {
-	glClearColor(bgColor.red() / 255.0f, bgColor.green() / 255.0f, bgColor.blue() / 255.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
 	glColor3f(1.0f, 0.0f, 0.0f);
 
 	// Shape Marking
@@ -126,14 +121,23 @@ void GLWidget::paintGL()
 	glVertex3d(0, 0, 0);
 	glVertex3d(0, 0, 50);
 	glEnd();
+}
+
+// Fonction mettre à jour de la scène OpenGL
+void GLWidget::paintGL()
+{
+	glClearColor(bgColor.red() / 255.0f, bgColor.green() / 255.0f, bgColor.blue() / 255.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	drawGridAxes();
 
 	// Points
 	drawLines(points, TriangulationSimple(points));
-	drawLinesStrip(EnvelopeJarvis(points));
-	drawPoly(GrahamScan(points));
+	drawPoly(EnveloppeJarvis(points), QVector3D(150.0f, 150.0f, 150.0f), 6);
+	drawPoly(GrahamScan(points), QVector3D(150.0f, 0, 150.0f), 2);
 
 	drawPoints(points);
-
+	//Delaunay_addPoint(points, sides, faces, QVector3D(1, 1, 1));
 	glPopMatrix();
 }
 
@@ -147,14 +151,14 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
 			points.push_back(Point(QVector3D((int)(((float)event->pos().x() - screenW / 2) / 4.55), (int)(((float)event->pos().y() - screenH / 2) / 4.55), 0)));
 			//points.push_back(Point(QVector3D((int)((float)event->pos().x() * 2.0 * range / screenW - range), (int)((float)-event->pos().y() * 2.0 * range / screenH + range), 0)));
 			qDebug() << ((float)event->pos().x() - screenW / 2) / 4.55 << " " << ((float)event->pos().y() - screenH / 2) / 4.55;
-			update();
+			//update();
 		}
 	}
 	else if (event->buttons() & Qt::RightButton)
 	{
 		if (pointSelected != -1) {
 			points.erase(points.begin()+pointSelected);
-			update();
+			//update();
 		}
 	}
 }
@@ -168,7 +172,9 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 	{
 		if (pointSelected >= 0)
 		{
+			// supp(pp)
 			points[pointSelected] = Point(QVector3D((int)(((float)event->pos().x() - screenW / 2) / 4.55), (int)(((float)event->pos().y() - screenH / 2) / 4.55), 0));
+			//ajout(pp)
 			update();
 		}
 	}
@@ -216,17 +222,17 @@ int GLWidget::findNearestPoint(QPoint p)
 	return -1;
 }
 
-void GLWidget::drawLinesStrip(vector<QVector3D> pts)
+void GLWidget::drawPoly(vector<Point> pts, QVector3D color, float width)
 {
 	int nbPoints = pts.size();
 	if (nbPoints == 0)
 		return;
-	glColor3f(150.0f, 150.0f, 0);
-	glLineWidth(6);
+	glColor3f(color.x(), color.y(), color.z());
+	glLineWidth(width);
 	glBegin(GL_LINE_LOOP);
 	for (int i = 0; i < nbPoints; i++) 
 	{
-		glVertex3f(pts[i].x(), pts[i].y(), pts[i].z());
+		glVertex3f(pts[i].coord.x(), pts[i].coord.y(), pts[i].coord.z());
 	}
 	glEnd();
 }
@@ -245,20 +251,6 @@ void GLWidget::drawLines(vector<Point> points, vector<Side> sides)
 		int indexP2 = getPointIndex(points, sides[i].pHigh);
 		glVertex3f(points.at(indexP1).coord.x(), points.at(indexP1).coord.y(), points.at(indexP1).coord.z());
 		glVertex3f(points.at(indexP2).coord.x(), points.at(indexP2).coord.y(), points.at(indexP2).coord.z());
-	}
-	glEnd();
-}
-
-void GLWidget::drawPoly(vector<Point> points)
-{
-	int nbPoints = points.size();
-	if (nbPoints == 0)
-		return;
-	glColor3f(150.0f, 0.0f, 150.0f);
-	glLineWidth(2);
-	glBegin(GL_LINE_LOOP);
-	for (int i = 0; i < nbPoints; i++) {
-		glVertex3f(points[i].coord.x(), points[i].coord.y(), points[i].coord.z());
 	}
 	glEnd();
 }

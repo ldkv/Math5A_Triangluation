@@ -4,8 +4,9 @@
 
 using namespace std;
 
-static int globalId = 0;
-
+static int globalId_Points = 0;
+static int globalId_Sides = 0;
+static int globalId_Faces = 0;
 struct Point
 {
 	int id;
@@ -13,7 +14,7 @@ struct Point
 	vector<int> sides;
 	Point() 
 	{
-		id = globalId++;
+		id = globalId_Points++;
 	};
 	Point(int idi, QVector3D pt, vector<int> s)
 	{
@@ -24,7 +25,7 @@ struct Point
 	Point(QVector3D pt)
 	{
 		coord = pt;
-		id = globalId++;
+		id = globalId_Points++;
 	}
 };
 
@@ -35,11 +36,15 @@ struct Side
 	int pHigh;
 	int fLeft;
 	int fRight;
-
-	Side(int h, int l)
+	Side()
+	{
+		id = globalId_Sides++;
+	};
+	Side(int l, int h)
 	{
 		pLow = l;
 		pHigh = h;
+		id = globalId_Sides++;
 	}
 };
 
@@ -50,8 +55,9 @@ struct Face
 };
 
 Point *getPointfromID(vector<Point> pts, int id);
-vector<QVector3D> EnvelopeJarvis(vector<Point> pts);
+vector<Point> EnveloppeJarvis(vector<Point> pts);
 vector<Side> TriangulationSimple(vector<Point> pts);
 int getPointIndex(vector<Point> pts, int id);
 //vector<Side> GrahamScan(vector<Point> pts);
 vector<Point> GrahamScan(vector<Point> pts);
+void Delaunay_addPoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &faces, QVector3D P);
