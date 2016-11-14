@@ -128,10 +128,9 @@ void GLWidget::paintGL()
 	glEnd();
 
 	// Points
-	drawLines(points, TriangulationSimple(points));
-	drawLinesStrip(EnvelopeJarvis(points));
-	drawPoly(GrahamScan(points));
-
+	drawLines(TriangulationSimple(points));
+	//drawLinesStrip(EnvelopeJarvis(points));
+	//drawPoly(GrahamScan(points));
 	drawPoints(points);
 
 	glPopMatrix();
@@ -147,6 +146,7 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
 			points.push_back(Point(QVector3D((int)(((float)event->pos().x() - screenW / 2) / 4.55), (int)(((float)event->pos().y() - screenH / 2) / 4.55), 0)));
 			//points.push_back(Point(QVector3D((int)((float)event->pos().x() * 2.0 * range / screenW - range), (int)((float)-event->pos().y() * 2.0 * range / screenH + range), 0)));
 			qDebug() << ((float)event->pos().x() - screenW / 2) / 4.55 << " " << ((float)event->pos().y() - screenH / 2) / 4.55;
+
 			update();
 		}
 	}
@@ -232,7 +232,7 @@ void GLWidget::drawLinesStrip(vector<QVector3D> pts)
 }
 
 // Dessiner des côtés à partir des points
-void GLWidget::drawLines(vector<Point> points, vector<Side> sides)
+/*void GLWidget::drawLines(vector<Point> points, vector<Side> sides)
 {
 	int nbPoints = sides.size();
 	if (nbPoints == 0)
@@ -247,6 +247,36 @@ void GLWidget::drawLines(vector<Point> points, vector<Side> sides)
 		glVertex3f(points.at(indexP2).coord.x(), points.at(indexP2).coord.y(), points.at(indexP2).coord.z());
 	}
 	glEnd();
+}*/
+void GLWidget::drawLines(vector<Face> faces)
+{
+	int nbPoints = faces.size();
+	if (nbPoints == 0)
+		return;
+	glColor3f(150.0f, 150.0f, 150.0f);
+	for (int i = 0; i < faces.size(); i++)
+	{
+		if ((faces[i].points.size() == 3)) {
+			glBegin(GL_LINES);
+			/*glVertex3f(sides[i].points[0].coord.x() , sides[i].points[0].coord.y(), sides[i].points[0].coord.z());
+			glVertex3f(sides[i].points[1].coord.x(), sides[i].points[1].coord.y(), sides[i].points[1].coord.z());*/
+			glVertex3f(faces[i].points[0].coord.x(), faces[i].points[0].coord.y(), faces[i].points[0].coord.z());
+			glVertex3f(faces[i].points[1].coord.x(), faces[i].points[1].coord.y(), faces[i].points[1].coord.z());
+			/*for (int i = 0; i <= 2; i++)
+			{
+			glVertex3f(faces[i].points[i].coord.x(), faces[i].points[i].coord.y(), faces[i].points[i].coord.z());
+			}*/
+			glEnd();
+			glBegin(GL_LINES);
+			glVertex3f(faces[i].points[1].coord.x(), faces[i].points[1].coord.y(), faces[i].points[1].coord.z());
+			glVertex3f(faces[i].points[2].coord.x(), faces[i].points[2].coord.y(), faces[i].points[2].coord.z());
+			glEnd();
+			glBegin(GL_LINES);
+			glVertex3f(faces[i].points[2].coord.x(), faces[i].points[2].coord.y(), faces[i].points[2].coord.z());
+			glVertex3f(faces[i].points[0].coord.x(), faces[i].points[0].coord.y(), faces[i].points[0].coord.z());
+			glEnd();
+		}
+	}
 }
 
 void GLWidget::drawPoly(vector<Point> points)
