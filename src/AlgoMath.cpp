@@ -13,6 +13,7 @@ Point *getPointfromID(vector<Point> pts, int id)
 	return nullptr;
 }
 
+// BUG: infinite loop if 2 points confondus
 vector<QVector3D> EnvelopeJarvis(vector<Point> pts)
 {
 	vector<QVector3D> poly;

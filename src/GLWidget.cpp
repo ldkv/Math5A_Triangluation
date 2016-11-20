@@ -83,49 +83,11 @@ void GLWidget::paintGL()
 	glColor3f(1.0f, 0.0f, 0.0f);
 
 	// Shape Marking
-
 	glPushMatrix();
 	glRotatef(m_theta, 1.0f, 0.0f, 0.0f);
 	glRotatef(m_phi, 0.0f, 0.0f, 1.0f);
 
-	// Grid
-
-	glBegin(GL_LINES);
-	glColor3f(0.1, 0.1, 0.1);
-	for (float x = -100; x < 100; x += 5)
-	{
-		glVertex3d(x, -100, 0);
-		glVertex3d(x, 100, 0);
-	}
-	glEnd();
-	glBegin(GL_LINES);
-	glColor3f(0.1, 0.1, 0.1);
-	for (float z = -100; z < 100; z += 5)
-	{
-		glVertex3d(-100, z, 0);
-		glVertex3d(100, z, 0);
-	}
-	glEnd();
-
-	// Axis
-
-	glColor3f(0, 1, 0);
-	glBegin(GL_LINES);
-	glVertex3d(0, 0, 0);
-	glVertex3d(0, 50, 0);
-	glEnd();
-
-	glColor3f(1, 0, 0);
-	glBegin(GL_LINES);
-	glVertex3d(0, 0, 0);
-	glVertex3d(50, 0, 0);
-	glEnd();
-
-	glColor3f(0, 0, 1);
-	glBegin(GL_LINES);
-	glVertex3d(0, 0, 0);
-	glVertex3d(0, 0, 50);
-	glEnd();
+	//drawGridandAxis();
 
 	// Points
 	drawLines(TriangulationSimple(points));
@@ -214,6 +176,48 @@ int GLWidget::findNearestPoint(QPoint p)
 			return i;
 	}
 	return -1;
+}
+
+void GLWidget::drawGridandAxis()
+{
+	// Grid
+
+	glBegin(GL_LINES);
+	glColor3f(0.1, 0.1, 0.1);
+	for (float x = -100; x < 100; x += 5)
+	{
+		glVertex3d(x, -100, 0);
+		glVertex3d(x, 100, 0);
+	}
+	glEnd();
+	glBegin(GL_LINES);
+	glColor3f(0.1, 0.1, 0.1);
+	for (float z = -100; z < 100; z += 5)
+	{
+		glVertex3d(-100, z, 0);
+		glVertex3d(100, z, 0);
+	}
+	glEnd();
+
+	// Axis
+
+	glColor3f(0, 1, 0);
+	glBegin(GL_LINES);
+	glVertex3d(0, 0, 0);
+	glVertex3d(0, 50, 0);
+	glEnd();
+
+	glColor3f(1, 0, 0);
+	glBegin(GL_LINES);
+	glVertex3d(0, 0, 0);
+	glVertex3d(50, 0, 0);
+	glEnd();
+
+	glColor3f(0, 0, 1);
+	glBegin(GL_LINES);
+	glVertex3d(0, 0, 0);
+	glVertex3d(0, 0, 50);
+	glEnd();
 }
 
 void GLWidget::drawLinesStrip(vector<QVector3D> pts)

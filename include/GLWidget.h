@@ -43,9 +43,10 @@ protected:
 
 	virtual void keyPressEvent(QKeyEvent* e);
 
+	void drawGridandAxis();
 	// Dessiner des côtés à partir des points
 	void drawPoints(vector<Point> points);
-	void drawLines(vector<Point> points, vector<Side> sides);
+	//void drawLines(vector<Point> points, vector<Side> sides);
 	void drawLines(vector<Face> faces);
 	void drawLinesStrip(vector<QVector3D> points);
 
