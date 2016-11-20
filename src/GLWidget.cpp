@@ -87,36 +87,39 @@ void GLWidget::paintGL()
 	glRotatef(m_theta, 1.0f, 0.0f, 0.0f);
 	glRotatef(m_phi, 0.0f, 0.0f, 1.0f);
 
-	drawGridandAxis();
+	drawGridandAxes();
+	drawPoints(points);
 
-	// Points
-	switch (modeEnvelop)
-	{
-	case 1:
-		drawLinesStrip(EnvelopeJarvis(points));
-		break;
-	case 2:
-		drawPoly(GrahamScan(points));
-		break;
-	default:
-		break;
-	}
+	// Triangulation
 	switch (modeTriangulation)
 	{
-	case 1:
+	case 1:	// Triangulation simple (avec flipping ou non)
 		drawLines(TriangulationSimple(points));
 		if (flipping)
 		{
 		}
 		break;
-	case 2:		
+	case 2:	// Triangulation Delaunay
 		break;
-	case 3:
+	case 3:	// Voronoi
 		break;
 	default:
 		break;
 	}
-	drawPoints(points);
+
+	// Enveloppe
+	switch (modeEnvelop)
+	{
+	case 1:	// Enveloppe par méthode marche de Jarvis
+		drawPoly(EnvelopeJarvis(points), QVector3D(150.0f, 150.0f, 150.0f), 6);
+		break;
+	case 2:	// Enveloppe par méthode Graham-Scan
+		drawPoly(GrahamScan(points), QVector3D(150.0f, 0, 150.0f), 2);
+		break;
+	default:
+		break;
+	}
+
 
 	glPopMatrix();
 }
@@ -206,10 +209,10 @@ int GLWidget::findNearestPoint(QPoint p)
 	return -1;
 }
 
-void GLWidget::drawGridandAxis()
+void GLWidget::drawGridandAxes()
 {
 	// Grid
-
+	glLineWidth(1);
 	glBegin(GL_LINES);
 	glColor3f(0.1, 0.1, 0.1);
 	for (float x = -100; x < 100; x += 5)
@@ -245,21 +248,6 @@ void GLWidget::drawGridandAxis()
 	glBegin(GL_LINES);
 	glVertex3d(0, 0, 0);
 	glVertex3d(0, 0, 50);
-	glEnd();
-}
-
-void GLWidget::drawLinesStrip(vector<QVector3D> pts)
-{
-	int nbPoints = pts.size();
-	if (nbPoints == 0)
-		return;
-	glColor3f(150.0f, 150.0f, 0);
-	glLineWidth(6);
-	glBegin(GL_LINE_LOOP);
-	for (int i = 0; i < nbPoints; i++) 
-	{
-		glVertex3f(pts[i].x(), pts[i].y(), pts[i].z());
-	}
 	glEnd();
 }
 
@@ -311,16 +299,17 @@ void GLWidget::drawLines(vector<Face> faces)
 	}
 }
 
-void GLWidget::drawPoly(vector<Point> points)
+void GLWidget::drawPoly(vector<Point> pts, QVector3D color, float width)
 {
-	int nbPoints = points.size();
+	int nbPoints = pts.size();
 	if (nbPoints == 0)
 		return;
-	glColor3f(150.0f, 0.0f, 150.0f);
-	glLineWidth(2);
+	glColor3f(color.x(), color.y(), color.z());
+	glLineWidth(width);
 	glBegin(GL_LINE_LOOP);
-	for (int i = 0; i < nbPoints; i++) {
-		glVertex3f(points[i].coord.x(), points[i].coord.y(), points[i].coord.z());
+	for (int i = 0; i < nbPoints; i++)
+	{
+		glVertex3f(pts[i].coord.x(), pts[i].coord.y(), pts[i].coord.z());
 	}
 	glEnd();
 }
