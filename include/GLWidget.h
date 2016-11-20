@@ -34,6 +34,9 @@ public:
 	~GLWidget();
 
 	void resetCamera();
+	void changeModeEnvelop(int mode) { modeEnvelop = mode; qDebug() << modeEnvelop; }
+	void changeModeTriangulation(int mode) { modeTriangulation = mode; qDebug() << modeTriangulation; }
+	void setFlipping(int f) { flipping = f == 0 ? false : true; qDebug() << flipping; }
 
 protected:
 	void mousePressEvent(QMouseEvent *event);
@@ -43,12 +46,15 @@ protected:
 
 	virtual void keyPressEvent(QKeyEvent* e);
 
-	// Dessiner la grille et les axes
-	void drawGridAxes();
+	void drawGridandAxis();
+	QVector3D convertXY(int X, int Y);
 	// Dessiner des côtés à partir des points
 	void drawPoints(vector<Point> points);
-	void drawLines(vector<Point> points, vector<Side> sides);
-	void drawPoly(vector<Point> pts, QVector3D color, float width);
+	//void drawLines(vector<Point> points, vector<Side> sides);
+	void drawLines(vector<Face> faces);
+	void drawLinesStrip(vector<QVector3D> points);
+
+	void drawPoly(vector<Point> points);
 
 public slots:
 	void timeOutSlot();
@@ -63,6 +69,7 @@ private:
 
 	float m_theta; // Rotation x-axis
 	float m_phi; // Rotation  y-axis
+	double range;
 	float m_aspectRatio;
 	bool mouseLook;
 	QPoint rotValue;
@@ -71,7 +78,6 @@ private:
 
 	int screenW;
 	int screenH;
-	double range;
 
 	vector<Point> points;
 	vector<Side> sides;
@@ -81,6 +87,10 @@ private:
 	unsigned int current_id_faces = 0;
 
 	int pointSelected;
+
+	int modeEnvelop = 0;
+	int modeTriangulation = 0;
+	bool flipping = false;
 };
 
 
