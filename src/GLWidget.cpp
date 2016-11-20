@@ -43,6 +43,7 @@ void GLWidget::initializeGL()
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+	range = 100.0;
 }
 
 // Redimensionner de la scène pour adapter à la fenêtre principale
@@ -59,7 +60,6 @@ void GLWidget::resizeGL(int width, int height)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
-	range = 100.0;
 	m_aspectRatio = double(width) / double(height);
 	//gluOrtho2D(0, width, height, 0);
 	if (width <= height)
@@ -70,7 +70,8 @@ void GLWidget::resizeGL(int width, int height)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	qDebug() << width << " " << height;
+	//qDebug() << width << " " << height;
+	//qDebug() << -range * m_aspectRatio << " " << range * m_aspectRatio;
 }
 
 // Fonction mettre à jour de la scène OpenGL
@@ -79,61 +80,53 @@ void GLWidget::paintGL()
 	glClearColor(bgColor.red() / 255.0f, bgColor.green() / 255.0f, bgColor.blue() / 255.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
 	glColor3f(1.0f, 0.0f, 0.0f);
 
 	// Shape Marking
-
 	glPushMatrix();
 	glRotatef(m_theta, 1.0f, 0.0f, 0.0f);
 	glRotatef(m_phi, 0.0f, 0.0f, 1.0f);
 
-	// Grid
-
-	glBegin(GL_LINES);
-	glColor3f(0.1, 0.1, 0.1);
-	for (float x = -100; x < 100; x += 5)
-	{
-		glVertex3d(x, -100, 0);
-		glVertex3d(x, 100, 0);
-	}
-	glEnd();
-	glBegin(GL_LINES);
-	glColor3f(0.1, 0.1, 0.1);
-	for (float z = -100; z < 100; z += 5)
-	{
-		glVertex3d(-100, z, 0);
-		glVertex3d(100, z, 0);
-	}
-	glEnd();
-
-	// Axis
-
-	glColor3f(0, 1, 0);
-	glBegin(GL_LINES);
-	glVertex3d(0, 0, 0);
-	glVertex3d(0, 50, 0);
-	glEnd();
-
-	glColor3f(1, 0, 0);
-	glBegin(GL_LINES);
-	glVertex3d(0, 0, 0);
-	glVertex3d(50, 0, 0);
-	glEnd();
-
-	glColor3f(0, 0, 1);
-	glBegin(GL_LINES);
-	glVertex3d(0, 0, 0);
-	glVertex3d(0, 0, 50);
-	glEnd();
-
-	// Points
-	drawLines(TriangulationSimple(points));
-	//drawLinesStrip(EnvelopeJarvis(points));
-	//drawPoly(GrahamScan(points));
+	drawGridandAxes();
 	drawPoints(points);
 
+	// Triangulation
+	switch (modeTriangulation)
+	{
+	case 1:	// Triangulation simple (avec flipping ou non)
+		drawLines(TriangulationSimple(points));
+		if (flipping)
+		{
+		}
+		break;
+	case 2:	// Triangulation Delaunay
+		break;
+	case 3:	// Voronoi
+		break;
+	default:
+		break;
+	}
+
+	// Enveloppe
+	switch (modeEnvelop)
+	{
+	case 1:	// Enveloppe par méthode marche de Jarvis
+		drawPoly(EnvelopeJarvis(points), QVector3D(150.0f, 150.0f, 150.0f), 6);
+		break;
+	case 2:	// Enveloppe par méthode Graham-Scan
+		drawPoly(GrahamScan(points), QVector3D(150.0f, 0, 150.0f), 2);
+		break;
+	default:
+		break;
+	}
+
+
 	glPopMatrix();
+}
+
+QVector3D GLWidget::convertXY(int X, int Y)
+{
+	return QVector3D((int)((float)X * 2.0 * range * m_aspectRatio / screenW - range * m_aspectRatio), (int)((float)Y * 2.0 * range / screenH - range), 0);
 }
 
 // Callback pour les click de la souris
@@ -143,9 +136,9 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
 	if (event->buttons() & Qt::LeftButton)
 	{
 		if (pointSelected == -1) {
-			points.push_back(Point(QVector3D((int)(((float)event->pos().x() - screenW / 2) / 4.55), (int)(((float)event->pos().y() - screenH / 2) / 4.55), 0)));
-			//points.push_back(Point(QVector3D((int)((float)event->pos().x() * 2.0 * range / screenW - range), (int)((float)-event->pos().y() * 2.0 * range / screenH + range), 0)));
-			qDebug() << ((float)event->pos().x() - screenW / 2) / 4.55 << " " << ((float)event->pos().y() - screenH / 2) / 4.55;
+			//points.push_back(Point(QVector3D((int)(((float)event->pos().x() - screenW / 2) / 4.55), (int)(((float)event->pos().y() - screenH / 2) / 4.55), 0)));
+			points.push_back(Point(convertXY(event->pos().x(), event->pos().y())));
+			//qDebug() << ((float)event->pos().x() - screenW / 2) / 4.55 << " " << ((float)event->pos().y() - screenH / 2) / 4.55;
 
 			update();
 		}
@@ -168,7 +161,7 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 	{
 		if (pointSelected >= 0)
 		{
-			points[pointSelected] = Point(QVector3D((int)(((float)event->pos().x() - screenW / 2) / 4.55), (int)(((float)event->pos().y() - screenH / 2) / 4.55), 0));
+			points[pointSelected] = Point(convertXY(event->pos().x(), event->pos().y()));
 			update();
 		}
 	}
@@ -209,25 +202,52 @@ int GLWidget::findNearestPoint(QPoint p)
 	int nbPoints = points.size();
 	for (int i = 0; i < nbPoints; i++)
 	{
-		QPoint d = QPoint((p.x() - screenW / 2) / 4.55, (p.y()-screenH / 2) / 4.55) - QPoint(points[i].coord.x(), points[i].coord.y());
+		QVector3D d = convertXY(p.x(), p.y()) - QVector3D(points[i].coord.x(), points[i].coord.y(), 0);
 		if (sqrt(pow(d.x(), 2) + pow(d.y(), 2) <= POINT_SIZE*4))
 			return i;
 	}
 	return -1;
 }
 
-void GLWidget::drawLinesStrip(vector<QVector3D> pts)
+void GLWidget::drawGridandAxes()
 {
-	int nbPoints = pts.size();
-	if (nbPoints == 0)
-		return;
-	glColor3f(150.0f, 150.0f, 0);
-	glLineWidth(6);
-	glBegin(GL_LINE_LOOP);
-	for (int i = 0; i < nbPoints; i++) 
+	// Grid
+	glLineWidth(1);
+	glBegin(GL_LINES);
+	glColor3f(0.1, 0.1, 0.1);
+	for (float x = -100; x < 100; x += 5)
 	{
-		glVertex3f(pts[i].x(), pts[i].y(), pts[i].z());
+		glVertex3d(x, -100, 0);
+		glVertex3d(x, 100, 0);
 	}
+	glEnd();
+	glBegin(GL_LINES);
+	glColor3f(0.1, 0.1, 0.1);
+	for (float z = -100; z < 100; z += 5)
+	{
+		glVertex3d(-100, z, 0);
+		glVertex3d(100, z, 0);
+	}
+	glEnd();
+
+	// Axis
+
+	glColor3f(0, 1, 0);
+	glBegin(GL_LINES);
+	glVertex3d(0, 0, 0);
+	glVertex3d(0, 50, 0);
+	glEnd();
+
+	glColor3f(1, 0, 0);
+	glBegin(GL_LINES);
+	glVertex3d(0, 0, 0);
+	glVertex3d(50, 0, 0);
+	glEnd();
+
+	glColor3f(0, 0, 1);
+	glBegin(GL_LINES);
+	glVertex3d(0, 0, 0);
+	glVertex3d(0, 0, 50);
 	glEnd();
 }
 
@@ -279,16 +299,17 @@ void GLWidget::drawLines(vector<Face> faces)
 	}
 }
 
-void GLWidget::drawPoly(vector<Point> points)
+void GLWidget::drawPoly(vector<Point> pts, QVector3D color, float width)
 {
-	int nbPoints = points.size();
+	int nbPoints = pts.size();
 	if (nbPoints == 0)
 		return;
-	glColor3f(150.0f, 0.0f, 150.0f);
-	glLineWidth(2);
+	glColor3f(color.x(), color.y(), color.z());
+	glLineWidth(width);
 	glBegin(GL_LINE_LOOP);
-	for (int i = 0; i < nbPoints; i++) {
-		glVertex3f(points[i].coord.x(), points[i].coord.y(), points[i].coord.z());
+	for (int i = 0; i < nbPoints; i++)
+	{
+		glVertex3f(pts[i].coord.x(), pts[i].coord.y(), pts[i].coord.z());
 	}
 	glEnd();
 }

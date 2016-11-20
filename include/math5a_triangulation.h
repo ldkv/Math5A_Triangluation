@@ -14,7 +14,11 @@ public:
 	~Math5A_Triangulation();
 
 private slots:
+	void modeEnvelop();
+	void modeTriangulation();
+	void setFlipping(int f);
 	void resetCamera();
+	void quit();
 
 private:
 	Ui::triangulationForm ui;

@@ -13,9 +13,64 @@ Point *getPointfromID(vector<Point> pts, int id)
 	return nullptr;
 }
 
-vector<QVector3D> EnvelopeJarvis(vector<Point> pts)
+void Delaunay_addPoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &faces, QVector3D P)
 {
-	vector<QVector3D> poly;
+	// Si T ne contient pas de triangle
+	if (faces.size() <= 0)
+	{
+		// Si T est vide
+		if (pts.size() < 1)
+		{
+			pts.push_back(Point(P));
+			return;
+		}
+		// Si T contient 1 seul point
+		if (pts.size() == 1)
+		{
+			pts.push_back(Point(P));
+			sides.push_back(Side(pts[0].id, pts[1].id));
+			return;
+		}
+		// Si T contient plusieurs points et ils sont tous colinéaires
+		else
+		{
+			// Si P est colinéaires aux sommets de T
+			if (Collinear(pts[0].coord - P, pts[0].coord - pts[1].coord))
+			{
+				//Point bary = barycenter(pts);
+			}
+			// P n'est pas colinéaire
+			else
+			{
+				pts.push_back(Point(P));
+				int N = pts.size();
+				int S = sides.size();	// Nombre original des côtés
+				for (int i = 0; i < N - 1; i++)
+				{
+					sides.push_back(Side(pts[i].id, pts[N - 1].id));
+					pts[i].sides.push_back(sides[sides.size() - 1].id);
+					pts[N - 1].sides.push_back(sides[sides.size() - 1].id);
+				}
+
+				for (int i = 0; i < S; i++)
+				{
+					
+				}
+			}
+		}
+	}
+}
+
+bool Collinear(QVector3D v1, QVector3D v2)
+{
+	//return (v1.y()*v2.z() == v1.z()*v2.y() && v1.z()*v2.x() == v1.x()*v2.z() && v1.x()*v2.y() == v1.y()*v2.x());
+	return (QVector3D::crossProduct(v1, v2) == QVector3D(0, 0, 0));
+}
+
+// BUG: infinite loop if 2 points confondus
+vector<Point> EnvelopeJarvis(vector<Point> pts)
+{
+	vector<Point> poly;
 	int N = pts.size();
 	if (N <= 0)
 		return poly;
@@ -36,7 +91,7 @@ vector<QVector3D> EnvelopeJarvis(vector<Point> pts)
 	do
 	{
 		Point Pi = pts[i];
-		poly.push_back(Pi.coord);
+		poly.push_back(Pi);
 		if (N <= 1)
 			break;
 		// recherche du point suivant
