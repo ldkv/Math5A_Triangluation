@@ -47,6 +47,7 @@ struct Side
 		id = globalSideId++;
 	}
 	Side(Point p1, Point p2) {
+		points.clear();
 		points.push_back(p1);
 		points.push_back(p2);
 		id = globalSideId++;
@@ -93,6 +94,8 @@ vector<Side> FindExternSides();
 //bool checkVisibilitySide(Side side, Point p);
 vector<QVector3D> EnvelopeJarvis(vector<Point> pts);
 vector<Face> TriangulationSimple(vector<Point> pts);
+void Delaunay_addPoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &faces, QVector3D P);
+bool Collinear(QVector3D v1, QVector3D v2);
 int getPointIndex(vector<Point> pts, int id);
 //vector<Side> GrahamScan(vector<Point> pts);
 vector<Point> GrahamScan(vector<Point> pts);

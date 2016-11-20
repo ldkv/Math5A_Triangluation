@@ -40,51 +40,135 @@
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <widget class="QDockWidget" name="dockWidget">
+   <property name="features">
+    <set>QDockWidget::NoDockWidgetFeatures</set>
+   </property>
+   <property name="windowTitle">
+    <string>Configuration</string>
+   </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
    </attribute>
-   <widget class="QWidget" name="dockWidgetContents_2">
+   <widget class="QWidget" name="dockWidgetContents">
     <layout class="QVBoxLayout" name="verticalLayout_2">
      <item>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
-        <widget class="QPushButton" name="resetCam">
-         <property name="text">
-          <string>Reset Camera</string>
+        <widget class="QGroupBox" name="groupEnvelop">
+         <property name="title">
+          <string>Enveloppe convexe</string>
          </property>
-         <property name="checkable">
-          <bool>false</bool>
-         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <widget class="QRadioButton" name="rbJarvis">
+            <property name="text">
+             <string>Marche de Jarvis</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="rbGrahamScan">
+            <property name="text">
+             <string>Graham-Scan</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="rbNoneEnv">
+            <property name="text">
+             <string>Rien</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="config2">
-         <property name="text">
-          <string>Config2</string>
+        <widget class="QGroupBox" name="groupTriangulation">
+         <property name="title">
+          <string>Triangulation</string>
          </property>
+         <layout class="QVBoxLayout" name="verticalLayout_4">
+          <item>
+           <widget class="QRadioButton" name="rbTriSimple">
+            <property name="text">
+             <string>Triangulation quelconque</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="cbFlipping">
+            <property name="text">
+             <string>Flipping</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="rbTriDelaunay">
+            <property name="text">
+             <string>Triangluation Delaunay</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="rbVoronoi">
+            <property name="text">
+             <string>Voronoi</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="rbNoneTri">
+            <property name="text">
+             <string>Rien</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+         <zorder>rbTriSimple</zorder>
+         <zorder>rbNoneTri</zorder>
+         <zorder>rbTriDelaunay</zorder>
+         <zorder>rbVoronoi</zorder>
+         <zorder>cbFlipping</zorder>
         </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="config1">
-         <property name="text">
-          <string>Config3</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="horizontalSpacer">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
        </item>
       </layout>
+     </item>
+     <item>
+      <widget class="QPushButton" name="bResetCam">
+       <property name="text">
+        <string>Reset Camera</string>
+       </property>
+       <property name="checkable">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="verticalSpacer">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>40</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="bQuit">
+       <property name="text">
+        <string>Quitter</string>
+       </property>
+      </widget>
      </item>
     </layout>
    </widget>
