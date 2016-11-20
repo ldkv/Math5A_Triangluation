@@ -64,10 +64,10 @@ struct Side
 struct Face
 {
 	int id;
-	vector<int> sides;
+	vector<Side> sides;
 	vector<Point> points;
 
-	Face(int sideId) {
+	/*Face(int sideId) {
 		sides.push_back(sideId);
 		id = globalFaceId++;
 	}
@@ -76,11 +76,14 @@ struct Face
 		sides.push_back(sideId2);
 		sides.push_back(sideiD3);
 		id = globalFaceId++;
-	}
+	}*/
 	Face(Point p1, Point p2, Point p3) {
 		points.push_back(p1);
 		points.push_back(p2);
 		points.push_back(p3);
+		sides.push_back(Side(p1, p2));
+		sides.push_back(Side(p2, p3));
+		sides.push_back(Side(p3, p1));
 		id = globalFaceId++;
 	}
 };

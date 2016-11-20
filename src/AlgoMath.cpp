@@ -247,23 +247,63 @@ bool isEdgeViewed(QVector3D P, QVector3D A, QVector3D B, QVector3D n)
 
 	return dot(normalAB, v) > 0 ? true : false;
 }
-/*
-void circumCenter2D(Point<T> A, Point<T> B, Point<T> C) // Compute the circumCenter of the triangle ABC
+
+vector<Face> Fliping(vector<Face> faces)
 {
-	// explanation : http://en.wikipedia.org/wiki/Circumscribed_circle
-	T ax = A.x, ay = A.y, bx = B.x, by = B.y, cx = C.x, cy = C.y;
-	T ax2 = A.x*A.x, ay2 = A.y*A.y, bx2 = B.x*B.x, by2 = B.y*B.y, cx2 = C.x*C.x, cy2 = C.y*C.y;
+	std::vector<Side> & sides = faces[0].sides
+	if (sides.size() > 2)
+	{
+		std::vector<Side>::iterator itE;
+		for (itE = edges.begin(); itE != edges.end(); ++itE)
+		{
+			int directFace = itE->getFaceA();
+			int adjacentFace = itE->getFaceB();
 
-	T d = 2 * (ay*cx + by*ax - by*cx - ay*bx - cy*ax + cy*bx);
+			if (directFace != -1 && adjacentFace != -1) // Edge is between 2 faces
+			{
+				Face & faceA = m_mesh.getFace(directFace);
+				Face & faceB = m_mesh.getFace(adjacentFace);
 
-	x = by*ax2 - cy*ax2 - by2*ay + cy2*ay + bx2*cy + ay2*by + cx2*ay - cy2*by - cx2*by - bx2*ay + by2*cy - ay2*cy;
-	y = ax2*cx + ay2*cx + bx2*ax - bx2*cx + by2*ax - by2*cx - ax2*bx - ay2*bx - cx2*ax + cx2*bx - cy2*ax + cy2*bx;
+				// Get the oposite vertex to the edge
+				int idVertDirect = faceA.getThirdVertex(*itE);
+				int idVertAdjac = faceB.getThirdVertex(*itE);
+				assert(idVertDirect != -1 && idVertAdjac != -1);
 
-	x /= d;
-	y /= d;
-	z = 0;
+				Vertex vertEdgeA = m_mesh.getVertice(itE->getVertexA());
+				Vertex vertEdgeB = m_mesh.getVertice(itE->getVertexB());
+				Vertex vertDirect = m_mesh.getVertice(idVertDirect);
+				Vertex vertAdja = m_mesh.getVertice(idVertAdjac);
+
+				// check if vertex respect Delaunay critera 
+				float angleDirect = (vertEdgeA - vertDirect).angle(vertEdgeB - vertDirect);
+				float angleAdja = (vertEdgeA - vertAdja).angle(vertEdgeB - vertAdja);
+
+				// if nott respect critera
+				if (angleDirect + angleAdja > M_PI)
+				{
+					// Update the faces
+					faceA.setVertex(idVertDirect, itE->getVertexA(), idVertAdjac);
+					faceB.setVertex(idVertDirect, idVertAdjac, itE->getVertexB());
+
+					// update Edge
+					// Edge[vertA, Adj] => Face A (direct)
+					m_mesh.setEdge(itE->getVertexA(), idVertAdjac, directFace);
+					// Edge[Dir, vertA] => Face A
+					m_mesh.setEdge(idVertDirect, itE->getVertexA(), directFace);
+
+					// Edge[vertB, Dir] => Face B (Adjacent)
+					m_mesh.setEdge(itE->getVertexB(), idVertDirect, adjacentFace);
+					// Edge[Adj, vertB] => Face B (Adjacent)
+					m_mesh.setEdge(idVertAdjac, itE->getVertexB(), adjacentFace);
+
+					//	flip the Edge
+					itE->setVertexA(idVertAdjac);
+					itE->setVertexB(idVertDirect);
+				}
+			}
+		}
+	}
 }
-*/
 
 
 float* CrossProduct(float *a, float *b)
