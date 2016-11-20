@@ -46,15 +46,13 @@ protected:
 
 	virtual void keyPressEvent(QKeyEvent* e);
 
-	void drawGridandAxis();
+	void drawGridandAxes();
 	QVector3D convertXY(int X, int Y);
 	// Dessiner des côtés à partir des points
 	void drawPoints(vector<Point> points);
 	//void drawLines(vector<Point> points, vector<Side> sides);
 	void drawLines(vector<Face> faces);
-	void drawLinesStrip(vector<QVector3D> points);
-
-	void drawPoly(vector<Point> points);
+	void drawPoly(vector<Point> pts, QVector3D color, float width);
 
 public slots:
 	void timeOutSlot();

@@ -68,9 +68,9 @@ bool Collinear(QVector3D v1, QVector3D v2)
 }
 
 // BUG: infinite loop if 2 points confondus
-vector<QVector3D> EnvelopeJarvis(vector<Point> pts)
+vector<Point> EnvelopeJarvis(vector<Point> pts)
 {
-	vector<QVector3D> poly;
+	vector<Point> poly;
 	int N = pts.size();
 	if (N <= 0)
 		return poly;
@@ -91,7 +91,7 @@ vector<QVector3D> EnvelopeJarvis(vector<Point> pts)
 	do
 	{
 		Point Pi = pts[i];
-		poly.push_back(Pi.coord);
+		poly.push_back(Pi);
 		if (N <= 1)
 			break;
 		// recherche du point suivant

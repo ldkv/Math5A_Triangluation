@@ -92,7 +92,7 @@ int getSideIDFromPoints(vector<Side> s, Point x, Point y);
 int getSideFromID(vector<Side> s, int id);
 vector<Side> FindExternSides();
 //bool checkVisibilitySide(Side side, Point p);
-vector<QVector3D> EnvelopeJarvis(vector<Point> pts);
+vector<Point> EnvelopeJarvis(vector<Point> pts);
 vector<Face> TriangulationSimple(vector<Point> pts);
 void Delaunay_addPoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &faces, QVector3D P);
 bool Collinear(QVector3D v1, QVector3D v2);
