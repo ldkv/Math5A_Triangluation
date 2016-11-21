@@ -163,7 +163,6 @@ vector<Face> TriangulationSimple(vector<Point> pts) {
 			}
 		}
 
-
 		// 2.b) Construction of the root Triangulation
 		if (i < pts.size())
 		{
@@ -213,7 +212,6 @@ vector<Face> TriangulationSimple(vector<Point> pts) {
 }
 
 
-// Return an array of all the edge "viewed" by the given Vertex
 vector<Side> getViewedEdge(int nextIdVert, std::vector<Point> pts, std::list<Side> &convexHull)
 {
 	vector<Side> viewedEdge;
@@ -264,7 +262,6 @@ vector<Side> getViewedEdge(int nextIdVert, std::vector<Point> pts, std::list<Sid
 		}
 	}
 
-
 	std::vector<Side>::iterator itviewEdg;
 	Point firstVert = viewedEdge.front().points[0];
 	Point lastVert = viewedEdge.back().points[1];
@@ -292,6 +289,7 @@ QVector3D crossProductNormalized(QVector3D p, QVector3D op)
 	final = normalize(final);
 	return final;
 } // Produit vectoriel normalisé de 2 points.
+
 bool isEdgeViewed(QVector3D P, QVector3D A, QVector3D B, QVector3D n)
 {
 	QVector3D u = B - A; // Build a vector interior to AB
@@ -319,70 +317,6 @@ void circumCenter2D(Point<T> A, Point<T> B, Point<T> C) // Compute the circumCen
 	z = 0;
 }
 */
-
-
-float* CrossProduct(float *a, float *b)
-{
-	float Product[3];
-
-	//Cross product formula 
-	Product[0] = (a[1] * b[2]) - (a[2] * b[1]);
-	Product[1] = (a[2] * b[0]) - (a[0] * b[2]);
-	Product[2] = (a[0] * b[1]) - (a[1] * b[0]);
-
-	return Product;
-}
-
-/*
-QVector3D normalize(QVector3D v) {
-
-	double length = sqrt(v.x() * v.x() + v.y() * v.y() + v.z() * v.z());
-
-	v.x() = v.x() / length;
-	v.y() = v.y() / length;
-	v.z() = v.z() / length;
-}
-*/
-/*double dotProduct(glm::vec2 vecA, glm::vec2 vecB)
-{
-	//return normVector(vecA) * normVector(vecB) * glm::cos (vecA, vecB);
-	//return (p1.x * p2.x) + (p1.y * p2.y);
-	return glm::dot(vecA, vecB);
-}*/
-/*
-bool checkVisibilitySide(Side side, Point px, vector<Point> pts, Side side2) {
-	QVector3D p1 = QVector3D(getPointfromID(pts, side.pLow)->coord);
-	QVector3D p2 = QVector3D(getPointfromID(pts, side.pHigh)->coord);
-	QVector3D p3 = QVector3D(getPointfromID(pts, side.pHigh)->coord);
-	float dx = p2.x() - p1.x();
-	float dy = p2.y() - p2.y();
-	//QVector3D dz = z2 - z1;
-	QVector3D normal1 = normalize(QVector3D (-dy, dx, 0));
-	QVector3D normal2 = normalize(QVector3D(dy, -dx, 0));
-
-	QVector3D finalNormal;
-	if (QVector3D::dotProduct(p3 - p1, normal1) > 0) {
-		finalNormal = normal1;
-	}
-	else {
-		finalNormal = normal2;
-	}
-
-	float dp = QVector3D::dotProduct(finalNormal
-		, QVector3D(getPointfromID(pts, side.pLow)->coord - px.coord));
-	return dp < 180 ? true : false;
-}
-*/
-/*bool checkVisibilityEdge(Side &edge, Point &point)
-{
-	QVector3D a; a.dotProduct();
-	int value = dotProduct(edge, makeVector(edge., point));
-	if (value < 0)
-		return true;
-	return false;
-}*/
-
-
 
 int getSideIDFromPoints(vector<Side> s, Point x, Point y) {
 	for (int i = 0; i < s.size(); i++)
@@ -433,37 +367,11 @@ struct angleSort {
 	Point pointsBarycenter;
 };
 
-/*bool angleSort(Point i, Point j) {
-	/*float angle = atan2(vecX.x(), i.coord.x()) - atan2(vecX.y(), i.coord.y());
-	if (angle >= M_PI) angle -= 2 * M_PI;
-	if (angle <= -M_PI) angle += 2 * M_PI;
-	float angle2 = atan2(vecX.x(), j.coord.x()) - atan2(vecX.y(), j.coord.y());
-	if (angle2 >= M_PI) angle2 -= 2 * M_PI;
-	if (angle2 <= -M_PI) angle2 += 2 * M_PI;
-	QLineF lx(0, 0, 1, 0);
-	QLineF li(0, 0, i.coord.x(), i.coord.y());
-	QLineF lj(0, 0, j.coord.x(), j.coord.y());
-	float anglei = lx.angleTo(li);
-	float anglej = lx.angleTo(lj);
-	return anglei < anglej; 
-}*/
-
 int magnitudeVector(QVector3D v1, QVector3D v2)
 {
 	return sqrt(pow(v2.x() - v1.x(), 2)+ pow(v2.y() - v1.y(), 2));
 }
-/*
-double angleSigned(QVector3D v1, QVector3D v2)
-{
-	std::inner_product()
-	dotProduct(v1, v2);
-	//det(u,v)=ux*vy-uy*vx
-	dot / (magnitudeVector(v1) * magnitudeVector(v2));
 
-	float angle = acos(result);
-
-	return angle * 180 / M_PI;
-}*/
 
 int nextIndexPoint(int currentIndex, int vectorSize) {
 	return (currentIndex+1 >= vectorSize ?  currentIndex+1 - vectorSize : currentIndex+1);
@@ -504,3 +412,51 @@ vector<Point> GrahamScan(vector<Point> pts) {
 	}
 	return pts;
 }
+
+
+/*
+double angleSigned(QVector3D v1, QVector3D v2)
+{
+	std::inner_product()
+		dotProduct(v1, v2);
+	//det(u,v)=ux*vy-uy*vx
+	dot / (magnitudeVector(v1) * magnitudeVector(v2));
+
+	float angle = acos(result);
+
+	return angle * 180 / M_PI;
+}
+
+
+bool checkVisibilitySide(Side side, Point px, vector<Point> pts, Side side2) {
+	QVector3D p1 = QVector3D(getPointfromID(pts, side.pLow)->coord);
+	QVector3D p2 = QVector3D(getPointfromID(pts, side.pHigh)->coord);
+	QVector3D p3 = QVector3D(getPointfromID(pts, side.pHigh)->coord);
+	float dx = p2.x() - p1.x();
+	float dy = p2.y() - p2.y();
+	//QVector3D dz = z2 - z1;
+	QVector3D normal1 = normalize(QVector3D(-dy, dx, 0));
+	QVector3D normal2 = normalize(QVector3D(dy, -dx, 0));
+
+	QVector3D finalNormal;
+	if (QVector3D::dotProduct(p3 - p1, normal1) > 0) {
+		finalNormal = normal1;
+	}
+	else {
+		finalNormal = normal2;
+	}
+
+	float dp = QVector3D::dotProduct(finalNormal
+		, QVector3D(getPointfromID(pts, side.pLow)->coord - px.coord));
+	return dp < 180 ? true : false;
+}
+
+bool checkVisibilityEdge(Side &edge, Point &point)
+{
+	QVector3D a; a.dotProduct();
+	int value = dotProduct(edge, makeVector(edge., point));
+	if (value < 0)
+		return true;
+	return false;
+]
+*/

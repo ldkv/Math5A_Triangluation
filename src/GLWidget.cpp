@@ -166,10 +166,8 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 		}
 	}
 
-	// is the middle mouse button down?
-	if (event->buttons() == Qt::MidButton)
+	/*if (event->buttons() == Qt::MidButton)
 	{
-		// was it already down? If not, store the current coords
 		if (!mouseLook)
 		{
 			tmpMousePos = event->pos();
@@ -177,7 +175,7 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 			mouseLook = true;
 		}
 
-		// update the rotation values depending on the relative mouse position
+
 		rotValue.setX(tmpRotValue.x() + (tmpMousePos.x() - event->pos().x()) * 0.2);
 		rotValue.setY(tmpRotValue.y() + (tmpMousePos.y() - event->pos().y()) * -0.2);
 	}
@@ -185,7 +183,7 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 	{
 		// turn off mouse look
 		mouseLook = false;
-	}
+	}*/
 }
 
 // Callback pour la relâche de la souris
@@ -268,6 +266,7 @@ void GLWidget::drawGridandAxes()
 	}
 	glEnd();
 }*/
+
 void GLWidget::drawLines(vector<Face> faces)
 {
 	int nbPoints = faces.size();
@@ -278,14 +277,8 @@ void GLWidget::drawLines(vector<Face> faces)
 	{
 		if ((faces[i].points.size() == 3)) {
 			glBegin(GL_LINES);
-			/*glVertex3f(sides[i].points[0].coord.x() , sides[i].points[0].coord.y(), sides[i].points[0].coord.z());
-			glVertex3f(sides[i].points[1].coord.x(), sides[i].points[1].coord.y(), sides[i].points[1].coord.z());*/
 			glVertex3f(faces[i].points[0].coord.x(), faces[i].points[0].coord.y(), faces[i].points[0].coord.z());
 			glVertex3f(faces[i].points[1].coord.x(), faces[i].points[1].coord.y(), faces[i].points[1].coord.z());
-			/*for (int i = 0; i <= 2; i++)
-			{
-			glVertex3f(faces[i].points[i].coord.x(), faces[i].points[i].coord.y(), faces[i].points[i].coord.z());
-			}*/
 			glEnd();
 			glBegin(GL_LINES);
 			glVertex3f(faces[i].points[1].coord.x(), faces[i].points[1].coord.y(), faces[i].points[1].coord.z());
