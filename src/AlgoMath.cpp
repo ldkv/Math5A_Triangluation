@@ -176,6 +176,7 @@ vector<Face> TriangulationSimple(vector<Point> pts) {
 			}
 			else
 			{
+				i++;
 				break;
 			}
 		}
@@ -183,16 +184,24 @@ vector<Face> TriangulationSimple(vector<Point> pts) {
 		// 2.b) Construction of the root Triangulation
 		if (i < pts.size())
 		{
-			if (colinearPoints.size() > 1)
+			if (colinearPoints.size() >= 2)
 			{
-				unsigned int j;
-				for (j = 1; j < colinearPoints.size(); j++)
+				unsigned int j = 0;
+				/*for (j = 1; j < colinearPoints.size()+1; j++)
 				{
 					convexHull.push_back(Side(pts[j], pts[j - 1]));
 					convexHull.push_back(Side(pts[j - 1], pts[i]));
 					faces.push_back(Face(pts[j], pts[j - 1], pts[i]));
 				}
-				convexHull.push_back(Side(pts[i], pts[j - 1]));
+				convexHull.push_back(Side(pts[i], pts[j - 1]));*/
+				convexHull.push_back(Side(pts[0], pts[i]));
+				for (j = 0; j < colinearPoints.size(); j++)
+				{
+					convexHull.push_back(Side(pts[j], pts[j+1]));
+					//convexHull.push_back(Side(pts[j+1], pts[j+2]));
+					faces.push_back(Face(pts[j], pts[j+1], pts[i]));
+				}
+				convexHull.push_back(Side(pts[j], pts[i]));
 			}
 			else {
 				faces.push_back(Face(pts[0], pts[1], pts[2]));
@@ -279,15 +288,18 @@ vector<Side> getViewedEdge(int nextIdVert, std::vector<Point> pts, std::list<Sid
 		}
 	}
 
-	std::vector<Side>::iterator itviewEdg;
-	Point firstVert = viewedEdge.front().points[0];
-	Point lastVert = viewedEdge.back().points[1];
+	if (viewedEdge.size() > 0) {
+		std::vector<Side>::iterator itviewEdg;
+		Point firstVert = viewedEdge.front().points[0];
+		Point lastVert = viewedEdge.back().points[1];
 
-	convexHull.insert(toEdge, Side(firstVert, nextVert));
-	convexHull.insert(toEdge, Side(nextVert, lastVert));
-	
-	for (itviewEdg = viewedEdge.begin(); itviewEdg != viewedEdge.end(); itviewEdg++)
-		convexHull.remove(*itviewEdg);
+		convexHull.insert(toEdge, Side(firstVert, nextVert));
+		convexHull.insert(toEdge, Side(nextVert, lastVert));
+
+		for (itviewEdg = viewedEdge.begin(); itviewEdg != viewedEdge.end(); itviewEdg++)
+			convexHull.remove(*itviewEdg);
+	}
+
 	
 	return viewedEdge;
 }
