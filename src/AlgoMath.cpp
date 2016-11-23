@@ -61,6 +61,23 @@ void Delaunay_addPoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &fa
 	}
 }
 
+bool isVisible(Side side, Point point)
+{
+	bool result;
+	QVector3D temp;
+	QVector3D normal = crossProductNormalized(side.points[0].coord, side.points[1].coord);
+	QVector3D newVector(point.coord.x() - side.points[0].coord.x(), point.coord.y() - side.points[0].coord.y(), point.coord.z() - side.points[0].coord.z());
+	float value = temp.dotProduct(normal, newVector);
+	if (value < 0) {
+		result = true;
+	}
+	else
+	{
+		result = false;
+	}
+	return result;
+}
+
 bool Collinear(QVector3D v1, QVector3D v2)
 {
 	//return (v1.y()*v2.z() == v1.z()*v2.y() && v1.z()*v2.x() == v1.x()*v2.z() && v1.x()*v2.y() == v1.y()*v2.x());
@@ -301,61 +318,163 @@ bool isEdgeViewed(QVector3D P, QVector3D A, QVector3D B, QVector3D n)
 	return dot(normalAB, v) > 0 ? true : false;
 }
 
-vector<Face> Fliping(vector<Face> faces)
+vector<Side> Fliping(vector<Face> faces)
 {
-	std::vector<Side> & sides = faces[0].sides
-	if (sides.size() > 2)
+	/*for (int i = 0; i < faces.size(); i++)
 	{
-		std::vector<Side>::iterator itE;
-		for (itE = edges.begin(); itE != edges.end(); ++itE)
+		std::vector<Side>& sides = faces[i].sides;
+		if (sides.size() > 2)
 		{
-			int directFace = itE->getFaceA();
-			int adjacentFace = itE->getFaceB();
-
-			if (directFace != -1 && adjacentFace != -1) // Edge is between 2 faces
+			std::vector<Side>::iterator itE;
+			for (itE = sides.begin(); itE != sides.end(); ++itE)
 			{
-				Face & faceA = m_mesh.getFace(directFace);
-				Face & faceB = m_mesh.getFace(adjacentFace);
+				int directFace = itE->getFaceA();
+				int adjacentFace = itE->getFaceB();
 
-				// Get the oposite vertex to the edge
-				int idVertDirect = faceA.getThirdVertex(*itE);
-				int idVertAdjac = faceB.getThirdVertex(*itE);
-				assert(idVertDirect != -1 && idVertAdjac != -1);
-
-				Vertex vertEdgeA = m_mesh.getVertice(itE->getVertexA());
-				Vertex vertEdgeB = m_mesh.getVertice(itE->getVertexB());
-				Vertex vertDirect = m_mesh.getVertice(idVertDirect);
-				Vertex vertAdja = m_mesh.getVertice(idVertAdjac);
-
-				// check if vertex respect Delaunay critera 
-				float angleDirect = (vertEdgeA - vertDirect).angle(vertEdgeB - vertDirect);
-				float angleAdja = (vertEdgeA - vertAdja).angle(vertEdgeB - vertAdja);
-
-				// if nott respect critera
-				if (angleDirect + angleAdja > M_PI)
+				if (directFace != -1 && adjacentFace != -1) // Edge is between 2 faces
 				{
-					// Update the faces
-					faceA.setVertex(idVertDirect, itE->getVertexA(), idVertAdjac);
-					faceB.setVertex(idVertDirect, idVertAdjac, itE->getVertexB());
+					Face & faceA = m_mesh.getFace(directFace);
+					Face & faceB = m_mesh.getFace(adjacentFace);
 
-					// update Edge
-					// Edge[vertA, Adj] => Face A (direct)
-					m_mesh.setEdge(itE->getVertexA(), idVertAdjac, directFace);
-					// Edge[Dir, vertA] => Face A
-					m_mesh.setEdge(idVertDirect, itE->getVertexA(), directFace);
+					// Get the oposite vertex to the edge
+					int idVertDirect = faceA.getThirdVertex(*itE);
+					int idVertAdjac = faceB.getThirdVertex(*itE);
+					assert(idVertDirect != -1 && idVertAdjac != -1);
 
-					// Edge[vertB, Dir] => Face B (Adjacent)
-					m_mesh.setEdge(itE->getVertexB(), idVertDirect, adjacentFace);
-					// Edge[Adj, vertB] => Face B (Adjacent)
-					m_mesh.setEdge(idVertAdjac, itE->getVertexB(), adjacentFace);
+					Vertex vertEdgeA = m_mesh.getVertice(itE->getVertexA());
+					Vertex vertEdgeB = m_mesh.getVertice(itE->getVertexB());
+					Vertex vertDirect = m_mesh.getVertice(idVertDirect);
+					Vertex vertAdja = m_mesh.getVertice(idVertAdjac);
 
-					//	flip the Edge
-					itE->setVertexA(idVertAdjac);
-					itE->setVertexB(idVertDirect);
+					// check if vertex respect Delaunay critera 
+					float angleDirect = (vertEdgeA - vertDirect).angle(vertEdgeB - vertDirect);
+					float angleAdja = (vertEdgeA - vertAdja).angle(vertEdgeB - vertAdja);
+
+					// if nott respect critera
+					if (angleDirect + angleAdja > M_PI)
+					{
+						// Update the faces
+						faceA.setVertex(idVertDirect, itE->getVertexA(), idVertAdjac);
+						faceB.setVertex(idVertDirect, idVertAdjac, itE->getVertexB());
+
+						// update Edge
+						// Edge[vertA, Adj] => Face A (direct)
+						m_mesh.setEdge(itE->getVertexA(), idVertAdjac, directFace);
+						// Edge[Dir, vertA] => Face A
+						m_mesh.setEdge(idVertDirect, itE->getVertexA(), directFace);
+
+						// Edge[vertB, Dir] => Face B (Adjacent)
+						m_mesh.setEdge(itE->getVertexB(), idVertDirect, adjacentFace);
+						// Edge[Adj, vertB] => Face B (Adjacent)
+						m_mesh.setEdge(idVertAdjac, itE->getVertexB(), adjacentFace);
+
+						//	flip the Edge
+						itE->setVertexA(idVertAdjac);
+						itE->setVertexB(idVertDirect);
+					}
+				}
+			}
+		}
+	}*/
+
+	vector<Side> result;
+	vector<Side> AcTemp;
+	vector<Side> Ac;
+	for (int i = 0; i < faces.size(); i++)
+	{
+		AcTemp.push_back(Side(faces[i].points[0], faces[i].points[1], i));
+		AcTemp.push_back(Side(faces[i].points[1], faces[i].points[2], i));
+		AcTemp.push_back(Side(faces[i].points[2], faces[i].points[0], i));
+	}
+	vector<int> sideToDestroy;
+	for (int i = 0; i < AcTemp.size(); i++) {
+		for (int j = 0; j < AcTemp.size(); j++) {
+			if ((i != j)) {
+				bool pass = false;
+				for (int h = 0; h < sideToDestroy.size(); h++) {
+					if (sideToDestroy[h] == i) {
+						pass = true;
+					}
+				}
+				if (!pass && ((AcTemp[i].points[0].coord == AcTemp[j].points[0].coord && AcTemp[i].points[1].coord == AcTemp[j].points[1].coord) 
+					|| (AcTemp[i].points[1].coord == AcTemp[j].points[0].coord && AcTemp[i].points[0].coord == AcTemp[j].points[1].coord))) {
+					AcTemp[i].idFace2 = AcTemp[j].idFace1;
+					sideToDestroy.push_back(j);
 				}
 			}
 		}
 	}
+	for (int i = 0; i < AcTemp.size(); i++) {
+		bool pass = false;
+		for (int h = 0; h < sideToDestroy.size(); h++) {
+			if (sideToDestroy[h] == i) {
+				pass = true;
+			}
+		}
+		if(!pass)
+			Ac.push_back(AcTemp[i]);
+	}
+	while (Ac.size()!=0)
+	{
+		Side A = Ac.back();
+		Ac.pop_back();
+		if (A.idFace2 != -1) {
+			QVector3D p1;
+			QVector3D p2;
+			for (int i = 0; i <faces[A.idFace1].points.size(); i++) {
+				if (faces[A.idFace1].points[i].coord != A.points[0].coord && faces[A.idFace1].points[i].coord != A.points[1].coord) {
+					p1 = faces[A.idFace1].points[i].coord;
+					break;
+				}
+			}
+			for (int i = 0; i <faces[A.idFace2].points.size(); i++) {
+				if (faces[A.idFace2].points[i].coord != A.points[0].coord && faces[A.idFace2].points[i].coord != A.points[1].coord) {
+					p2 = faces[A.idFace2].points[i].coord;
+					break;
+				}
+			}
+			if (inCircumCircle(faces[A.idFace1], p2) || inCircumCircle(faces[A.idFace2], p1)) {
+				QVector3D p3;
+				QVector3D p4;
+				for (int i = 0; i <faces[A.idFace1].points.size(); i++) {
+					if (faces[A.idFace1].points[i].coord != p1 && faces[A.idFace1].points[i].coord != p2) {
+						p3 = faces[A.idFace1].points[i].coord;
+						break;
+					}
+				}
+				for (int i = 0; i <faces[A.idFace2].points.size(); i++) {
+					if (faces[A.idFace2].points[i].coord != p1 && faces[A.idFace2].points[i].coord != p2) {
+						p4 = faces[A.idFace2].points[i].coord;
+						break;
+					}
+				}
+				faces[A.idFace1].points[0] = p1;
+				faces[A.idFace1].points[1] = p2;
+				faces[A.idFace1].points[2] = p3;
+				faces[A.idFace2].points[0] = p1;
+				faces[A.idFace2].points[1] = p2;
+				faces[A.idFace2].points[2] = p4;
+				A.points[0] = p1;
+				A.points[1] = p2;
+			}
+		}
+		result.push_back(A);
+	}
+	return result;
+}
+
+bool inCircumCircle(Face f, QVector3D v)
+{
+	float ab = (f.points[0].coord.x() * f.points[0].coord.x()) + (f.points[0].coord.y() * f.points[0].coord.y());
+	float cd = (f.points[1].coord.x() * f.points[1].coord.x()) + (f.points[1].coord.y() * f.points[1].coord.y());
+	float ef = (f.points[2].coord.x() * f.points[2].coord.x()) + (f.points[2].coord.y() * f.points[2].coord.y());
+
+	float circum_x = (ab * (f.points[2].coord.y() - f.points[1].coord.y()) + cd * (f.points[0].coord.y() - f.points[2].coord.y()) + ef * (f.points[1].coord.y() - f.points[0].coord.y())) / (f.points[0].coord.x() * (f.points[2].coord.y() - f.points[1].coord.y()) + f.points[1].coord.x() * (f.points[0].coord.y() - f.points[2].coord.y()) + f.points[2].coord.x() * (f.points[1].coord.y() - f.points[0].coord.y())) / 2.f;
+	float circum_y = (ab * (f.points[2].coord.x() - f.points[1].coord.x()) + cd * (f.points[0].coord.x() - f.points[2].coord.x()) + ef * (f.points[1].coord.x() - f.points[0].coord.x())) / (f.points[0].coord.y() * (f.points[2].coord.x() - f.points[1].coord.x()) + f.points[1].coord.y() * (f.points[0].coord.x() - f.points[2].coord.x()) + f.points[2].coord.y() * (f.points[1].coord.x() - f.points[0].coord.x())) / 2.f;
+	float circum_radius = sqrtf(((f.points[0].coord.x() - circum_x) * (f.points[0].coord.x() - circum_x)) + ((f.points[0].coord.y() - circum_y) * (f.points[0].coord.y() - circum_y)));
+
+	float dist = sqrtf(((v.x() - circum_x) * (v.x() - circum_x)) + ((v.y() - circum_y) * (v.y() - circum_y)));
+	return dist <= circum_radius;
 }
 
 int getSideIDFromPoints(vector<Side> s, Point x, Point y) {
@@ -490,13 +609,4 @@ bool checkVisibilitySide(Side side, Point px, vector<Point> pts, Side side2) {
 		, QVector3D(getPointfromID(pts, side.pLow)->coord - px.coord));
 	return dp < 180 ? true : false;
 }
-
-bool checkVisibilityEdge(Side &edge, Point &point)
-{
-	QVector3D a; a.dotProduct();
-	int value = dotProduct(edge, makeVector(edge., point));
-	if (value < 0)
-		return true;
-	return false;
-]
 */

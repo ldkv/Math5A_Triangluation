@@ -39,6 +39,8 @@ struct Side
 	int fRight;
 
 	vector<Point> points;
+	int idFace1 = -1;
+	int idFace2 = -1;
 
 	Side(int h, int l)
 	{
@@ -50,6 +52,13 @@ struct Side
 		points.clear();
 		points.push_back(p1);
 		points.push_back(p2);
+		id = globalSideId++;
+	}
+	Side(Point p1, Point p2, int idFace) {
+		points.clear();
+		points.push_back(p1);
+		points.push_back(p2);
+		idFace1 = idFace;
 		id = globalSideId++;
 	}
 	bool operator==(const Side& e)
@@ -105,3 +114,5 @@ vector<Point> GrahamScan(vector<Point> pts);
 vector<Side> getViewedEdge(int nextIdVert, vector<Point> pts, list<Side> &convexHull);
 bool isEdgeViewed(QVector3D P, QVector3D A, QVector3D B, QVector3D n);
 QVector3D crossProductNormalized(QVector3D p, QVector3D op);
+vector<Side> Fliping(vector<Face> faces);
+bool inCircumCircle(Face f, QVector3D v);

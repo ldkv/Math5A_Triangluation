@@ -51,7 +51,8 @@ protected:
 	// Dessiner des côtés à partir des points
 	void drawPoints(vector<Point> points);
 	//void drawLines(vector<Point> points, vector<Side> sides);
-	void drawLines(vector<Face> faces);
+	void drawLines(vector<Side> sides);
+	void drawFaces(vector<Face> faces);
 	void drawPoly(vector<Point> pts, QVector3D color, float width);
 
 public slots:

@@ -91,12 +91,15 @@ void GLWidget::paintGL()
 	drawPoints(points);
 
 	// Triangulation
+	vector<Face> tgs;
 	switch (modeTriangulation)
 	{
 	case 1:	// Triangulation simple (avec flipping ou non)
-		drawLines(TriangulationSimple(points));
+		tgs = TriangulationSimple(points);
+		drawFaces(tgs);
 		if (flipping)
 		{
+			drawLines(Fliping(tgs));
 		}
 		break;
 	case 2:	// Triangulation Delaunay
@@ -136,9 +139,7 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
 	if (event->buttons() & Qt::LeftButton)
 	{
 		if (pointSelected == -1) {
-			//points.push_back(Point(QVector3D((int)(((float)event->pos().x() - screenW / 2) / 4.55), (int)(((float)event->pos().y() - screenH / 2) / 4.55), 0)));
 			points.push_back(Point(convertXY(event->pos().x(), event->pos().y())));
-			//qDebug() << ((float)event->pos().x() - screenW / 2) / 4.55 << " " << ((float)event->pos().y() - screenH / 2) / 4.55;
 
 			update();
 		}
@@ -267,7 +268,22 @@ void GLWidget::drawGridandAxes()
 	glEnd();
 }*/
 
-void GLWidget::drawLines(vector<Face> faces)
+void GLWidget::drawLines(vector<Side> sides)
+{
+	int nbSides = sides.size();
+	if (nbSides == 0)
+		return;
+	glColor3f(0.0f, 0.0f, 150.0f);
+	for (int i = 0; i < nbSides; i++)
+	{
+		glBegin(GL_LINES);
+		glVertex3f(sides[i].points[0].coord.x(), sides[i].points[0].coord.y(), sides[i].points[0].coord.z());
+		glVertex3f(sides[i].points[1].coord.x(), sides[i].points[1].coord.y(), sides[i].points[1].coord.z());
+		glEnd();
+	}
+}
+
+void GLWidget::drawFaces(vector<Face> faces)
 {
 	int nbPoints = faces.size();
 	if (nbPoints == 0)
