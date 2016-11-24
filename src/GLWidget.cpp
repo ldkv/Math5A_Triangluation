@@ -105,6 +105,8 @@ void GLWidget::paintGL()
 	case 2:	// Triangulation Delaunay
 		break;
 	case 3:	// Voronoi
+		drawLines(Voronoi(points));
+		drawPoints(Voronoi(points));
 		break;
 	default:
 		break;
@@ -281,6 +283,21 @@ void GLWidget::drawLines(vector<Side> sides)
 		glVertex3f(sides[i].points[1].coord.x(), sides[i].points[1].coord.y(), sides[i].points[1].coord.z());
 		glEnd();
 	}
+}
+
+void  GLWidget::drawLines(vector<Point> pts)
+{
+	int nbSides = pts.size();
+	if (nbSides == 0)
+		return;
+	glColor3f(0.0f, 0.0f, 150.0f);
+	glBegin(GL_LINES);
+	for (int i = 0; i < nbSides - 1; i++)
+	{
+		glVertex3f(pts[i].coord.x(), pts[i].coord.y(), pts[i].coord.z());
+		glVertex3f(pts[i + 1].coord.x(), pts[i + 1].coord.y(), pts[i + 1].coord.z());
+	}
+	glEnd();
 }
 
 void GLWidget::drawFaces(vector<Face> faces)

@@ -52,6 +52,7 @@ protected:
 	void drawPoints(vector<Point> points);
 	//void drawLines(vector<Point> points, vector<Side> sides);
 	void drawLines(vector<Side> sides);
+	void drawLines(vector<Point> pts);
 	void drawFaces(vector<Face> faces);
 	void drawPoly(vector<Point> pts, QVector3D color, float width);
 

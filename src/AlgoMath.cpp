@@ -584,6 +584,208 @@ vector<Point> GrahamScan(vector<Point> pts) {
 	return pts;
 }
 
+vector<Point> Voronoi(vector<Point> pts)
+{
+	vector<Face> tgs;
+	tgs = TriangulationSimple(pts);
+	vector<Face> triangles = Fliping2(tgs);
+	vector<Side> sides = Fliping(tgs);
+
+	vector<QVector3D> centers;
+	vector<Point> result;
+
+	for (int i = 0; i < triangles.size(); i++)
+	{
+		//centers.push_back(CircumCircleCenter(fp2[i]));
+		QVector3D ccc = CircumCircleCenter(triangles[i]);
+		result.push_back(Point(ccc));
+
+		for (int j = 0; j < sides.size(); j++)
+		{
+			int corr = 0;
+			for (int h = 0; h < triangles[i].points.size(); h++)
+			{
+				if (sides[j].points[0].coord == triangles[i].points[h].coord || sides[j].points[1].coord == triangles[i].points[h].coord) {
+					corr++;
+				}
+			}
+			if(corr == 2)
+			if (sides[j].idFace2 == -1) {
+				Point A = sides[j].points[0];
+				Point B = sides[j].points[1];
+
+				Point C;
+				for (int y = 0; y < triangles[i].points.size(); y++)
+				{
+					if (A.coord != triangles[i].points[y].coord && B.coord != triangles[i].points[y].coord) {
+						C = triangles[i].points[y];
+					}
+				}
+
+				QVector3D u = B.coord - A.coord;
+				QVector3D v = C.coord - A.coord;
+				QVector3D normal = crossProductNormalized(u, v);
+				normal = crossProduct(u, v);
+
+				QVector3D AB = B.coord - A.coord;
+				QVector3D AC = C.coord - A.coord;
+				QVector3D N = QVector3D(AB.y(), -AB.x(), 0);
+				float D = N.x()*AC.x() + N.y()*AC.y();
+					if (D > 0)
+						N = -N;
+
+				result.push_back(Point(ccc));
+				QVector3D cc = (A.coord + B.coord) / 2;
+				QVector3D x = QVector3D(cc.x() - ccc.x(), cc.y() - ccc.y(), cc.z() - ccc.z());
+				//result.push_back(Point(ccc+x*200));
+				result.push_back(Point(ccc + N));
+				//result.push_back(Point(ccc + normal*200));
+				//result.push_back(Point(ccc));
+			}
+		}
+
+		result.push_back(Point(ccc));
+	}
+
+
+	/*std::list<Edge>::iterator it = aretes.begin();
+	for (; it != aretes.end(); ++it)
+	{
+		//Cas d'une arête interne
+		if (it->T1() != NULL && it->T2() != NULL)
+		{
+			Point2D center1 = it->T1()->getCircumCircleCenter();
+			voronoi.push_back(center1);
+			Point2D center2 = it->T2()->getCircumCircleCenter();
+			voronoi.push_back(center2);
+		}
+		//Cas d'une arête externe
+		else if (it->T1() != NULL && it->T2() == NULL || it->T1() == NULL && it->T2() != NULL)
+		{
+			Triangle *triangle;
+			if (it->T1() != NULL)
+				triangle = it->T1();
+			else
+				triangle = it->T2();
+
+			//on push le premier point (centre triangle)
+			Point2D center1;
+			center1 = triangle->getCircumCircleCenter();
+			voronoi.push_back(center1);
+
+			//calcul normal
+			glm::vec2 normal = triangle->getNormal(&(*it));
+
+			Point2D center2;
+			glm::vec2 normalized = glm::normalize(normal);
+			normalized *= -3000;
+			normalized = it->GetCenter() + normalized;
+			center2 = Point2D(normalized.x, normalized.y);
+
+			voronoi.push_back(center2);
+		}
+	}*/
+
+	return result;
+}
+
+vector<Face> Fliping2(vector<Face> faces)
+{
+	vector<Side> AcTemp;
+	vector<Side> Ac;
+	for (int i = 0; i < faces.size(); i++)
+	{
+		AcTemp.push_back(Side(faces[i].points[0], faces[i].points[1], i));
+		AcTemp.push_back(Side(faces[i].points[1], faces[i].points[2], i));
+		AcTemp.push_back(Side(faces[i].points[2], faces[i].points[0], i));
+	}
+	vector<int> sideToDestroy;
+	for (int i = 0; i < AcTemp.size(); i++) {
+		for (int j = 0; j < AcTemp.size(); j++) {
+			if ((i != j)) {
+				bool pass = false;
+				for (int h = 0; h < sideToDestroy.size(); h++) {
+					if (sideToDestroy[h] == i) {
+						pass = true;
+					}
+				}
+				if (!pass && ((AcTemp[i].points[0].coord == AcTemp[j].points[0].coord && AcTemp[i].points[1].coord == AcTemp[j].points[1].coord)
+					|| (AcTemp[i].points[1].coord == AcTemp[j].points[0].coord && AcTemp[i].points[0].coord == AcTemp[j].points[1].coord))) {
+					AcTemp[i].idFace2 = AcTemp[j].idFace1;
+					sideToDestroy.push_back(j);
+				}
+			}
+		}
+	}
+	for (int i = 0; i < AcTemp.size(); i++) {
+		bool pass = false;
+		for (int h = 0; h < sideToDestroy.size(); h++) {
+			if (sideToDestroy[h] == i) {
+				pass = true;
+			}
+		}
+		if (!pass)
+			Ac.push_back(AcTemp[i]);
+	}
+	while (Ac.size() != 0)
+	{
+		Side A = Ac.back();
+		Ac.pop_back();
+		if (A.idFace2 != -1) {
+			QVector3D p1;
+			QVector3D p2;
+			for (int i = 0; i <faces[A.idFace1].points.size(); i++) {
+				if (faces[A.idFace1].points[i].coord != A.points[0].coord && faces[A.idFace1].points[i].coord != A.points[1].coord) {
+					p1 = faces[A.idFace1].points[i].coord;
+					break;
+				}
+			}
+			for (int i = 0; i <faces[A.idFace2].points.size(); i++) {
+				if (faces[A.idFace2].points[i].coord != A.points[0].coord && faces[A.idFace2].points[i].coord != A.points[1].coord) {
+					p2 = faces[A.idFace2].points[i].coord;
+					break;
+				}
+			}
+			if (inCircumCircle(faces[A.idFace1], p2) || inCircumCircle(faces[A.idFace2], p1)) {
+				QVector3D p3;
+				QVector3D p4;
+				for (int i = 0; i <faces[A.idFace1].points.size(); i++) {
+					if (faces[A.idFace1].points[i].coord != p1 && faces[A.idFace1].points[i].coord != p2) {
+						p3 = faces[A.idFace1].points[i].coord;
+						break;
+					}
+				}
+				for (int i = 0; i <faces[A.idFace2].points.size(); i++) {
+					if (faces[A.idFace2].points[i].coord != p1 && faces[A.idFace2].points[i].coord != p2) {
+						p4 = faces[A.idFace2].points[i].coord;
+						break;
+					}
+				}
+				faces[A.idFace1].points[0] = p1;
+				faces[A.idFace1].points[1] = p2;
+				faces[A.idFace1].points[2] = p3;
+				faces[A.idFace2].points[0] = p1;
+				faces[A.idFace2].points[1] = p2;
+				faces[A.idFace2].points[2] = p4;
+				A.points[0] = p1;
+				A.points[1] = p2;
+			}
+		}
+	}
+	return faces;
+}
+
+QVector3D CircumCircleCenter(Face f)
+{
+	float ab = (f.points[0].coord.x() * f.points[0].coord.x()) + (f.points[0].coord.y() * f.points[0].coord.y());
+	float cd = (f.points[1].coord.x() * f.points[1].coord.x()) + (f.points[1].coord.y() * f.points[1].coord.y());
+	float ef = (f.points[2].coord.x() * f.points[2].coord.x()) + (f.points[2].coord.y() * f.points[2].coord.y());
+
+	float circum_x = (ab * (f.points[2].coord.y() - f.points[1].coord.y()) + cd * (f.points[0].coord.y() - f.points[2].coord.y()) + ef * (f.points[1].coord.y() - f.points[0].coord.y())) / (f.points[0].coord.x() * (f.points[2].coord.y() - f.points[1].coord.y()) + f.points[1].coord.x() * (f.points[0].coord.y() - f.points[2].coord.y()) + f.points[2].coord.x() * (f.points[1].coord.y() - f.points[0].coord.y())) / 2.f;
+	float circum_y = (ab * (f.points[2].coord.x() - f.points[1].coord.x()) + cd * (f.points[0].coord.x() - f.points[2].coord.x()) + ef * (f.points[1].coord.x() - f.points[0].coord.x())) / (f.points[0].coord.y() * (f.points[2].coord.x() - f.points[1].coord.x()) + f.points[1].coord.y() * (f.points[0].coord.x() - f.points[2].coord.x()) + f.points[2].coord.y() * (f.points[1].coord.x() - f.points[0].coord.x())) / 2.f;
+	return QVector3D(circum_x, circum_y, 0);
+}
+
 
 /*
 double angleSigned(QVector3D v1, QVector3D v2)

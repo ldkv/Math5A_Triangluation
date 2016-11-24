@@ -115,4 +115,7 @@ vector<Side> getViewedEdge(int nextIdVert, vector<Point> pts, list<Side> &convex
 bool isEdgeViewed(QVector3D P, QVector3D A, QVector3D B, QVector3D n);
 QVector3D crossProductNormalized(QVector3D p, QVector3D op);
 vector<Side> Fliping(vector<Face> faces);
+vector<Face> Fliping2(vector<Face> faces);
 bool inCircumCircle(Face f, QVector3D v);
+vector<Point> Voronoi(vector<Point> pts);
+QVector3D CircumCircleCenter(Face f);
