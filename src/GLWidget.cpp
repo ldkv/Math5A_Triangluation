@@ -6,7 +6,7 @@
 #include <math.h>
 #include "AlgoMath.h"
 
-extern vector<Point> points;
+vector<Point> points;
 
 // Initialisation de la scène OpenGL
 GLWidget::GLWidget(QWidget *parent) :
@@ -27,6 +27,7 @@ GLWidget::GLWidget(QWidget *parent) :
 
 GLWidget::~GLWidget()
 {
+	resetData(); 
 	delete[] t_Timer;
 }
 
@@ -88,7 +89,6 @@ void GLWidget::paintGL()
 	glRotatef(m_phi, 0.0f, 0.0f, 1.0f);
 
 	drawGridandAxes();
-	drawPoints(points);
 
 	// Triangulation
 	switch (modeTriangulation)
@@ -100,6 +100,8 @@ void GLWidget::paintGL()
 		}
 		break;
 	case 2:	// Triangulation Delaunay
+		//drawLines(faces);
+		drawFaces(faces);
 		break;
 	case 3:	// Voronoi
 		break;
@@ -120,6 +122,7 @@ void GLWidget::paintGL()
 		break;
 	}
 
+	drawPoints(points);
 
 	glPopMatrix();
 }
@@ -137,7 +140,8 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
 	{
 		if (pointSelected == -1) {
 			//points.push_back(Point(QVector3D((int)(((float)event->pos().x() - screenW / 2) / 4.55), (int)(((float)event->pos().y() - screenH / 2) / 4.55), 0)));
-			points.push_back(Point(convertXY(event->pos().x(), event->pos().y())));
+			Delaunay_addPoint(points, sides, faces, convertXY(event->pos().x(), event->pos().y()));
+			//points.push_back(Point(convertXY(event->pos().x(), event->pos().y())));
 			//qDebug() << ((float)event->pos().x() - screenW / 2) / 4.55 << " " << ((float)event->pos().y() - screenH / 2) / 4.55;
 
 			update();
@@ -251,6 +255,27 @@ void GLWidget::drawGridandAxes()
 	glEnd();
 }
 
+void GLWidget::drawFaces(vector<Face> faces)
+{
+	int nbFaces = faces.size();
+	if (nbFaces == 0)
+		return;
+	glColor3f(150.0f, 150.0f, 150.0f);
+	for (int k = 0; k < faces.size(); k++)
+	{
+		Point pts[6];
+		glBegin(GL_LINE_STRIP);
+		for (int i = 0; i < 3; i++)
+		{
+			pts[i*2] = getPointfromID(points, getSidefromID(sides, faces[k].sides[i]).pLow);
+			pts[i*2+1] = getPointfromID(points, getSidefromID(sides, faces[k].sides[i]).pHigh);
+			glVertex3f(pts[i * 2].coord.x(), pts[i * 2].coord.y(), pts[i * 2].coord.z());
+			glVertex3f(pts[i * 2 + 1].coord.x(), pts[i * 2 + 1].coord.y(), pts[i * 2 + 1].coord.z());
+		}
+		glEnd();
+	}
+}
+
 // Dessiner des côtés à partir des points
 /*void GLWidget::drawLines(vector<Point> points, vector<Side> sides)
 {
@@ -358,7 +383,16 @@ void GLWidget::keyPressEvent(QKeyEvent* e)
 	}
 }
 
+void GLWidget::resetData() 
+{
+	points.clear();
+	sides.clear();
+	faces.clear();
+	resetGlobalID();
+}
+
 void GLWidget::resetCamera() {
 	m_theta = 180.0f;
 	m_phi = 0.0f;
+	QApplication::setOverrideCursor(Qt::PointingHandCursor);
 }
