@@ -25,9 +25,10 @@ Math5A_Triangulation::Math5A_Triangulation(QWidget *parent)
 	connect(ui.rbTriDelaunay, SIGNAL(clicked()), this, SLOT(modeTriangulation()));
 	connect(ui.rbVoronoi, SIGNAL(clicked()), this, SLOT(modeTriangulation()));
 	connect(ui.rbNoneTri, SIGNAL(clicked()), this, SLOT(modeTriangulation()));
-	connect(ui.cbFlipping, SIGNAL(stateChanged(int)), this, SLOT(setFlipping(int)));
+	connect(ui.cbFlipping, SIGNAL(stateChanged(int)), glScene, SLOT(setFlipping(int)));
 
-	connect(ui.bResetCam, SIGNAL(clicked()), this, SLOT(resetCamera()));
+	connect(ui.bResetData, SIGNAL(clicked()), glScene, SLOT(resetData()));
+	connect(ui.bResetCam, SIGNAL(clicked()), glScene, SLOT(resetCamera()));
 	connect(ui.bQuit, SIGNAL(clicked()), this, SLOT(quit()));
 }
 
@@ -60,17 +61,6 @@ void Math5A_Triangulation::modeTriangulation()
 		glScene->changeModeTriangulation(3);
 	else
 		glScene->changeModeTriangulation(0);
-}
-
-void Math5A_Triangulation::setFlipping(int f)
-{
-	glScene->setFlipping(f);
-}
-
-void Math5A_Triangulation::resetCamera()
-{
-	glScene->resetCamera();
-	QApplication::setOverrideCursor(Qt::PointingHandCursor);
 }
 
 // Quitter

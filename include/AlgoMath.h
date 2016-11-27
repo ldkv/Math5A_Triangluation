@@ -15,8 +15,9 @@ struct Point
 	vector<int> sides;
 	Point() 
 	{
-		id = globalId++;
+		id = -1;
 	};
+
 	Point(int idi, QVector3D pt, vector<int> s)
 	{
 		id = idi;
@@ -42,16 +43,31 @@ struct Side
 	int idFace1 = -1;
 	int idFace2 = -1;
 
-	Side(int h, int l)
+	Side()
+	{
+		pLow = -1;
+		pHigh = -1;
+		fLeft = -1;
+		fRight = -1;
+		id = -1;
+	}
+
+	Side(int l, int h)
 	{
 		pLow = l;
 		pHigh = h;
+		fLeft = -1;
+		fRight = -1;
 		id = globalSideId++;
 	}
 	Side(Point p1, Point p2) {
 		points.clear();
 		points.push_back(p1);
 		points.push_back(p2);
+		pLow = p1.id;
+		pHigh = p2.id;
+		fLeft = -1;
+		fRight = -1;
 		id = globalSideId++;
 	}
 	Side(Point p1, Point p2, int idFace) {
@@ -75,18 +91,23 @@ struct Face
 {
 	int id;
 	vector<Side> sides;
+	vector<int> sidesID;
 	vector<Point> points;
 
-	/*Face(int sideId) {
-		sides.push_back(sideId);
+	Face()
+	{
+		id = -1;
+	}
+	Face(int sideId) {
+		sidesID.push_back(sideId);
 		id = globalFaceId++;
 	}
 	Face(int sideId1, int sideId2, int sideiD3) {
-		sides.push_back(sideId1);
-		sides.push_back(sideId2);
-		sides.push_back(sideiD3);
+		sidesID.push_back(sideId1);
+		sidesID.push_back(sideId2);
+		sidesID.push_back(sideiD3);
 		id = globalFaceId++;
-	}*/
+	}
 	Face(Point p1, Point p2, Point p3) {
 		points.push_back(p1);
 		points.push_back(p2);
@@ -98,20 +119,38 @@ struct Face
 	}
 };
 
-Point *getPointfromID(vector<Point> pts, int id);
+void resetGlobalID();
+Point getPointfromID(vector<Point> pts, int id);
+Side getSidefromID(vector<Side> sds, int id);
+Face getFacefromID(vector<Face> faces, int id);
+int getSideIDfromPoints(vector<Side> sides, int p1, int p2);
+void deleteSidefromID(int id, vector<Side> &sds, vector<Point> &pts);
+void deleteSidefromPoint(vector<Point> &pts, int sideID, int pointID);
+void deleteFacefromID(int id, vector<Face> &faces, vector<Side> &sides);
+void deleteFacefromSide(vector<Side> &sides, int sideID, int faceID);
+vector<Point> getVertexesfromFace(Face F, vector<Point> pts, vector<Side> sides);
+int addSide(int p1, int p2, vector<Side> &sides, vector<Point> &pts);
+
+vector<Point> EnvelopeJarvis(vector<Point> pts);
+bool Collinear(QVector3D v1, QVector3D v2);
+bool insideTriangle(QVector3D pt, QVector3D v1, QVector3D v2, QVector3D v3);
+bool insideCircumCircle(QVector3D pt, QVector3D v1, QVector3D v2, QVector3D v3);
+vector<Side> getViewedEdges(vector<Side> sides, vector<Point> pts, Point P); // methode utilisant les id
+void Delaunay_addPoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &faces, QVector3D P);
+
+
 int getPointIndex(vector<Point> pts, int id);
 int getSideIDFromPoints(vector<Side> s, Point x, Point y);
-int getSideFromID(vector<Side> s, int id);
-vector<Side> FindExternSides();
+//int getSideFromID(vector<Side> s, int id);
+//vector<Side> FindExternSides();
 //bool checkVisibilitySide(Side side, Point p);
-vector<Point> EnvelopeJarvis(vector<Point> pts);
 vector<Face> TriangulationSimple(vector<Point> pts);
-void Delaunay_addPoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &faces, QVector3D P);
-bool Collinear(QVector3D v1, QVector3D v2);
+
 int getPointIndex(vector<Point> pts, int id);
 //vector<Side> GrahamScan(vector<Point> pts);
 vector<Point> GrahamScan(vector<Point> pts);
 vector<Side> getViewedEdge(int nextIdVert, vector<Point> pts, list<Side> &convexHull);
+
 bool isEdgeViewed(QVector3D P, QVector3D A, QVector3D B, QVector3D n);
 QVector3D crossProductNormalized(QVector3D p, QVector3D op);
 vector<Side> Fliping(vector<Face> faces);

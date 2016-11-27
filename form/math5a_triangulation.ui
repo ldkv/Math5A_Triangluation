@@ -141,12 +141,26 @@
       </layout>
      </item>
      <item>
+      <widget class="QPushButton" name="bResetData">
+       <property name="text">
+        <string>Reset Data</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="bResetCam">
        <property name="text">
         <string>Reset Camera</string>
        </property>
        <property name="checkable">
         <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="uiDebug">
+       <property name="text">
+        <string>Debug</string>
        </property>
       </widget>
      </item>

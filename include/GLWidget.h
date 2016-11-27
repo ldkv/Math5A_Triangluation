@@ -4,17 +4,13 @@
 
 #include "AlgoMath.h"
 
+#include <QGLWidget>
+#include <QVector2D>
 #include <vector>
 
 using namespace std;
 
 #define POINT_SIZE 10
-
-
-
-
-#include <QGLWidget>
-#include <QVector2D>
 
 const float pi = 3.141592653f;
 const float twoPi = 2.0f * pi;
@@ -33,10 +29,9 @@ public:
 	void paintGL();
 	~GLWidget();
 
-	void resetCamera();
+	
 	void changeModeEnvelop(int mode) { modeEnvelop = mode; qDebug() << modeEnvelop; }
 	void changeModeTriangulation(int mode) { modeTriangulation = mode; qDebug() << modeTriangulation; }
-	void setFlipping(int f) { flipping = f == 0 ? false : true; qDebug() << flipping; }
 
 protected:
 	void mousePressEvent(QMouseEvent *event);
@@ -51,13 +46,17 @@ protected:
 	// Dessiner des côtés à partir des points
 	void drawPoints(vector<Point> points);
 	//void drawLines(vector<Point> points, vector<Side> sides);
-	void drawLines(vector<Side> sides);
-	void drawLines(vector<Point> pts);
+	void drawLinesFromSides(vector<Side> sides);
+	void drawLinesFromPoints(vector<Point> pts);
+	void drawFacesWithID(vector<Face> faces);
 	void drawFaces(vector<Face> faces);
 	void drawPoly(vector<Point> pts, QVector3D color, float width);
 
 public slots:
 	void timeOutSlot();
+	void setFlipping(int f) { flipping = f == 0 ? false : true; qDebug() << flipping; }
+	void resetData();
+	void resetCamera();
 
 signals:
 	void MouseMoved();
