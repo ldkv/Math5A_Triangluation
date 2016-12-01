@@ -103,7 +103,7 @@ void GLWidget::paintGL()
 		}
 		break;
 	case 2:	// Triangulation Delaunay
-		drawFacesWithID(faces);
+		drawFaces(faces);
 		break;
 	case 3:	// Voronoi
 		drawLinesFromPoints(Voronoi(points));
@@ -143,7 +143,7 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
 	if (event->buttons() & Qt::LeftButton)
 	{
 		if (pointSelected == -1) {  
-			//points.push_back(Point(convertXY(event->pos().x(), event->pos().y())));
+			points.push_back(Point(convertXY(event->pos().x(), event->pos().y())));
 			Delaunay_addPoint(points, sides, faces, convertXY(event->pos().x(), event->pos().y()));
 			//qDebug() <<;
 			update();
