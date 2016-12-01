@@ -119,6 +119,10 @@ struct Face
 	}
 };
 
+// VORONOI
+vector<Point> diagramVoronoi(vector<Point> pts, vector<Side> sides, vector<Face> faces);
+
+// DELAUNAY
 void resetGlobalID();
 Point getPointfromID(vector<Point> pts, int id);
 Side getSidefromID(vector<Side> sds, int id);
@@ -144,6 +148,7 @@ vector<Point> EnvelopeJarvis(vector<Point> pts);
 bool Collinear(QVector3D v1, QVector3D v2);
 bool insideTriangle(QVector3D pt, QVector3D v1, QVector3D v2, QVector3D v3);
 bool insideCircumCircle(QVector3D pt, QVector3D v1, QVector3D v2, QVector3D v3);
+QVector3D circumCircleCenter(QVector3D v1, QVector3D v2, QVector3D v3);
 vector<Side> getViewedEdges(vector<Side> sides, vector<Point> pts, Point P); // methode utilisant les id
 void Delaunay_addPoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &faces, QVector3D P);
 void Delaunay_deletePoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &faces, int deleteID);

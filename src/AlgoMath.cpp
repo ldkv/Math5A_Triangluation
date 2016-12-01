@@ -103,6 +103,64 @@ void deleteFacefromID(int faceID, vector<Face> &faces, vector<Side> &sides)
 	}
 }
 
+vector<Point> diagramVoronoi(vector<Point> pts, vector<Side> sides, vector<Face> faces)
+{
+	vector<Point> results;
+	float scale = 1000;
+	if (pts.size() <= 1)
+		return results;
+	if (faces.size() == 0)
+	{
+		std::sort(pts.begin(), pts.end(), coordsSort);
+		for (int i = 0; i < pts.size() - 1; i++)
+		{
+			QVector3D AB = pts[i + 1].coord - pts[i].coord;
+			QVector3D M = (pts[i + 1].coord + pts[i].coord) / 2;
+			float y1 = scale, y2 = -y1;
+			float x1 = AB.y() / AB.x()*(M.y() - y1) + M.x();
+			float x2 = AB.y() / AB.x()*(M.y() - y2) + M.x();
+			results.push_back(Point(QVector3D(x1, y1, 0)));
+			results.push_back(Point(QVector3D(x2, y2, 0)));
+		}
+		return results;
+	}
+
+	map<int, QVector3D> Ct;
+	for (int i = 0; i < faces.size(); i++)
+	{
+		vector<Point> v = getVertexesfromFace(faces[i], pts, sides);
+		Ct[i] = circumCircleCenter(v[0].coord, v[1].coord, v[2].coord);
+	}
+	
+	vector<Point> A;
+	for (int i = 0; i < sides.size(); i++)
+	{
+		QVector3D A1, A2;
+		if (sides[i].fLeft != -1)
+			A1 = Ct[sides[i].fLeft];
+		if (sides[i].fRight != -1)
+			A2 = Ct[sides[i].fRight];
+		else
+		{
+			QVector3D S1 = getPointfromID(pts, sides[i].pLow).coord;
+			QVector3D S2 = getPointfromID(pts, sides[i].pHigh).coord;
+			QVector3D n = (S1 + S2) / 2 - A1;
+			float x = A1.x() + n.x() * scale;
+			float y = A1.y() + n.y() * scale;
+			A2 = QVector3D(x, y, 0);
+		}
+		results.push_back(Point(A1));
+		results.push_back(Point(A2));
+	}
+
+	for (int i = 0; i < pts.size(); i++)
+	{
+		 
+	}
+
+	return results;
+}
+
 void Delaunay_addPoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &faces, QVector3D P)
 {
 	// A) T ne contient pas de triangle
@@ -576,6 +634,15 @@ bool insideTriangle(QVector3D pt, QVector3D v1, QVector3D v2, QVector3D v3)
 	b3 = sign(pt, v3, v1) < 0.0f;
 
 	return ((b1 == b2) && (b2 == b3));
+}
+
+QVector3D circumCircleCenter(QVector3D v1, QVector3D v2, QVector3D v3)
+{
+	float alpha = (v2 - v3).lengthSquared() * QVector3D::dotProduct(v1 - v2, v1 - v3) / (2 * QVector3D::crossProduct(v1 - v2, v2 - v3).lengthSquared());
+	float beta = (v1 - v3).lengthSquared() * QVector3D::dotProduct(v2 - v1, v2 - v3) / (2 * QVector3D::crossProduct(v1 - v2, v2 - v3).lengthSquared());
+	float theta = (v1 - v2).lengthSquared() * QVector3D::dotProduct(v3 - v1, v3 - v2) / (2 * QVector3D::crossProduct(v1 - v2, v2 - v3).lengthSquared());
+
+	return alpha*v1 + beta*v2 + theta*v3;
 }
 
 bool insideCircumCircle(QVector3D pt, QVector3D v1, QVector3D v2, QVector3D v3)

@@ -105,9 +105,11 @@ void GLWidget::paintGL()
 	case 2:	// Triangulation Delaunay
 		drawFacesWithID(faces);
 		break;
-	case 3:	// Voronoi
-		drawLinesFromPoints(Voronoi(points));
-		drawPoints(Voronoi(points));
+	case 3:	// Diagramme de Voronoi
+		//drawLinesFromPoints(Voronoi(points));
+		drawFacesWithID(faces);
+		drawLinesFromPoints(diagramVoronoi(points, sides, faces));
+		//drawPoints(Voronoi(points));
 		break;
 	default:
 		break;
@@ -143,7 +145,7 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
 	if (event->buttons() & Qt::LeftButton)
 	{
 		if (pointSelected == -1) {  
-			if (modeTriangulation == 2)
+			if (modeTriangulation >= 2)
 				Delaunay_addPoint(points, sides, faces, convertXY(event->pos().x(), event->pos().y()));
 			else
 				points.push_back(Point(convertXY(event->pos().x(), event->pos().y())));
@@ -153,7 +155,7 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
 	else if (event->buttons() & Qt::RightButton)
 	{
 		if (pointSelected != -1) {
-			if (modeTriangulation == 2)
+			if (modeTriangulation >= 2)
 				Delaunay_deletePoint(points, sides, faces, pointSelected);
 			else
 				points.erase(points.begin() + pointSelected);
@@ -171,7 +173,7 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 	{
 		if (pointSelected >= 0)
 		{
-			if (modeTriangulation == 2)
+			if (modeTriangulation >= 2)
 			{
 				Delaunay_deletePoint(points, sides, faces, pointSelected);
 				Delaunay_addPoint(points, sides, faces, convertXY(event->pos().x(), event->pos().y()));
@@ -325,7 +327,11 @@ void  GLWidget::drawLinesFromPoints(vector<Point> pts)
 	int nbSides = pts.size();
 	if (nbSides == 0)
 		return;
-	glColor3f(0.0f, 0.0f, 150.0f);
+	glColor3f(150.0f, 0.0f, 0.0f);
+	//glPushAttrib is done to return everything to normal after drawing
+	glPushAttrib(GL_ENABLE_BIT);
+	glLineStipple(10, 0xAAAA);
+	glEnable(GL_LINE_STIPPLE);
 	glBegin(GL_LINES);
 	for (int i = 0; i < nbSides - 1; i++)
 	{
@@ -333,6 +339,7 @@ void  GLWidget::drawLinesFromPoints(vector<Point> pts)
 		glVertex3f(pts[i + 1].coord.x(), pts[i + 1].coord.y(), pts[i + 1].coord.z());
 	}
 	glEnd();
+	glPopAttrib();
 }
 
 void GLWidget::drawFaces(vector<Face> faces)
@@ -422,7 +429,7 @@ void GLWidget::keyPressEvent(QKeyEvent* e)
 void GLWidget::changeModeTriangulation(int mode)
 {
 	modeTriangulation = mode;
-	if (mode == 2)
+	if (mode >= 2)
 	{
 		vector<Point> temp = points;
 		resetData();
