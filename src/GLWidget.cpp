@@ -92,6 +92,7 @@ void GLWidget::paintGL()
 
 	// Triangulation
 	vector<Face> tgs;
+	vector<Point> voronoi;
 	switch (modeTriangulation)
 	{
 	case 1:	// Triangulation simple (avec flipping ou non)
@@ -103,13 +104,14 @@ void GLWidget::paintGL()
 		}
 		break;
 	case 2:	// Triangulation Delaunay
-		drawFacesWithID(faces);
+		drawFacesWithID(faces, false);
 		break;
 	case 3:	// Diagramme de Voronoi
-		//drawLinesFromPoints(Voronoi(points));
-		drawFacesWithID(faces);
-		drawLinesFromPoints(diagramVoronoi(points, sides, faces));
-		//drawPoints(Voronoi(points));
+		voronoi = diagramVoronoi(points, sides, faces);
+		//voronoi = Voronoi(points);
+		drawFacesWithID(faces, true);
+		drawLinesFromPoints(voronoi);
+		drawPoints(voronoi);
 		break;
 	default:
 		break;
@@ -268,12 +270,37 @@ void GLWidget::drawGridandAxes()
 	glEnd();
 }
 
-void GLWidget::drawFacesWithID(vector<Face> faces)
+void  GLWidget::drawLinesFromPoints(vector<Point> pts)
+{
+	int nbSides = pts.size();
+	if (nbSides == 0)
+		return;
+	glColor3f(150.0f, 0.0f, 0.0f);
+	//glPushAttrib is done to return everything to normal after drawing
+	glPushAttrib(GL_ENABLE_BIT);
+	glLineStipple(10, 0xAAAA);
+	//glEnable(GL_LINE_STIPPLE);
+	glBegin(GL_LINES);
+	for (int i = 0; i < nbSides - 1; i++)
+	{
+		glVertex3f(pts[i].coord.x(), pts[i].coord.y(), pts[i].coord.z());
+		glVertex3f(pts[i + 1].coord.x(), pts[i + 1].coord.y(), pts[i + 1].coord.z());
+	}
+	glEnd();
+	glPopAttrib();
+}
+
+void GLWidget::drawFacesWithID(vector<Face> faces, bool stipple)
 {
 	int nbFaces = faces.size();
 	if (nbFaces == 0)
 		return;
 	glColor3f(150.0f, 150.0f, 150.0f);
+	//glPushAttrib is done to return everything to normal after drawing
+	glPushAttrib(GL_ENABLE_BIT);
+	glLineStipple(2, 0x00FF);
+	if (stipple)
+		glEnable(GL_LINE_STIPPLE);
 	for (int k = 0; k < faces.size(); k++)
 	{
 		Point pts[6];
@@ -287,25 +314,8 @@ void GLWidget::drawFacesWithID(vector<Face> faces)
 		}
 		glEnd();
 	}
+	glPopAttrib();
 }
-
-// Dessiner des côtés à partir des points
-/*void GLWidget::drawLines(vector<Point> points, vector<Side> sides)
-{
-	int nbPoints = sides.size();
-	if (nbPoints == 0)
-		return;
-	glColor3f(150.0f, 150.0f, 150.0f);
-	glBegin(GL_LINES);
-	for (int i = 0; i < nbPoints; i++) 
-	{
-		int indexP1 = getPointIndex(points, sides[i].pLow);
-		int indexP2 = getPointIndex(points, sides[i].pHigh);
-		glVertex3f(points.at(indexP1).coord.x(), points.at(indexP1).coord.y(), points.at(indexP1).coord.z());
-		glVertex3f(points.at(indexP2).coord.x(), points.at(indexP2).coord.y(), points.at(indexP2).coord.z());
-	}
-	glEnd();
-}*/
 
 void GLWidget::drawLinesFromSides(vector<Side> sides)
 {
@@ -320,26 +330,6 @@ void GLWidget::drawLinesFromSides(vector<Side> sides)
 		glVertex3f(sides[i].points[1].coord.x(), sides[i].points[1].coord.y(), sides[i].points[1].coord.z());
 		glEnd();
 	}
-}
-
-void  GLWidget::drawLinesFromPoints(vector<Point> pts)
-{
-	int nbSides = pts.size();
-	if (nbSides == 0)
-		return;
-	glColor3f(150.0f, 0.0f, 0.0f);
-	//glPushAttrib is done to return everything to normal after drawing
-	glPushAttrib(GL_ENABLE_BIT);
-	glLineStipple(10, 0xAAAA);
-	glEnable(GL_LINE_STIPPLE);
-	glBegin(GL_LINES);
-	for (int i = 0; i < nbSides - 1; i++)
-	{
-		glVertex3f(pts[i].coord.x(), pts[i].coord.y(), pts[i].coord.z());
-		glVertex3f(pts[i + 1].coord.x(), pts[i + 1].coord.y(), pts[i + 1].coord.z());
-	}
-	glEnd();
-	glPopAttrib();
 }
 
 void GLWidget::drawFaces(vector<Face> faces)
@@ -450,3 +440,22 @@ void GLWidget::resetCamera() {
 	m_phi = 0.0f;
 	QApplication::setOverrideCursor(Qt::PointingHandCursor);
 }
+
+
+// Dessiner des côtés à partir des points
+/*void GLWidget::drawLines(vector<Point> points, vector<Side> sides)
+{
+int nbPoints = sides.size();
+if (nbPoints == 0)
+return;
+glColor3f(150.0f, 150.0f, 150.0f);
+glBegin(GL_LINES);
+for (int i = 0; i < nbPoints; i++)
+{
+int indexP1 = getPointIndex(points, sides[i].pLow);
+int indexP2 = getPointIndex(points, sides[i].pHigh);
+glVertex3f(points.at(indexP1).coord.x(), points.at(indexP1).coord.y(), points.at(indexP1).coord.z());
+glVertex3f(points.at(indexP2).coord.x(), points.at(indexP2).coord.y(), points.at(indexP2).coord.z());
+}
+glEnd();
+}*/

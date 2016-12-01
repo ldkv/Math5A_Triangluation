@@ -48,7 +48,7 @@ protected:
 	//void drawLines(vector<Point> points, vector<Side> sides);
 	void drawLinesFromSides(vector<Side> sides);
 	void drawLinesFromPoints(vector<Point> pts);
-	void drawFacesWithID(vector<Face> faces);
+	void drawFacesWithID(vector<Face> faces, bool stipple);
 	void drawFaces(vector<Face> faces);
 	void drawPoly(vector<Point> pts, QVector3D color, float width);
 
