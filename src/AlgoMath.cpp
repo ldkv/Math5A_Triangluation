@@ -164,22 +164,21 @@ vector<Point> diagramVoronoi(vector<Point> pts, vector<Side> sides, vector<Face>
 
 void Delaunay_addPoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &faces, QVector3D P)
 {
+	Point Snew = Point(P);
 	// A) T ne contient pas de triangle
 	if (faces.size() <= 0)
 	{
 		// A.1) T est vide
 		if (pts.size() < 1)
 		{
-			pts.push_back(Point(P));
+			pts.push_back(Snew);
 			return;
 		}
 		// A.2) T contient 1 seul point
 		if (pts.size() == 1)
 		{
-			pts.push_back(Point(P));
-			sides.push_back(Side(pts[0].id, pts[1].id));
-			pts[0].sides.push_back(sides[0].id);
-			pts[1].sides.push_back(sides[0].id);
+			pts.push_back(Snew);
+			addSide(pts[0].id, Snew.id, sides, pts);
 			return;
 		}
 		// A.3) T contient plusieurs points et ils sont tous colinéaires
@@ -189,18 +188,26 @@ void Delaunay_addPoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &fa
 			if (Collinear(pts[0].coord - P, pts[0].coord - pts[1].coord))
 			{
 				std::sort(pts.begin(), pts.end(), coordsSort);
-				if (pts[0].coord.x() < pts[1].coord.x())
+				// A.3.1.1)
+				if (P.x() < pts[0].coord.x())
 				{
-					if (P.x() < pts[0].coord.x())
-					{
-						// A FAIRE
-					}
+					pts.push_back(Snew);
+					addSide(Snew.id, pts[0].id, sides, pts);
+					return;
 				}
+				// A.3.1.2)
+				if (P.x() > pts[pts.size() - 1].coord.x())
+				{
+					pts.push_back(Snew);
+					addSide(pts[pts.size() - 1].id, Snew.id, sides, pts);
+					return;
+				}
+				// A.3.1.3)
+
 			}
 			// A.3.2) P n'est pas colinéaire
 			else
 			{
-				Point Snew = Point(P);
 				vector<Side> La;
 				for (int i = 0; i < pts.size(); i++)
 				{

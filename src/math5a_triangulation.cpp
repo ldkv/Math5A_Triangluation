@@ -14,7 +14,10 @@ Math5A_Triangulation::Math5A_Triangulation(QWidget *parent)
 	QObject::connect(shortcut, SIGNAL(activated()), this, SLOT(quit()));
 	// Ctrl + R pour reset le caméra
 	shortcut = new QShortcut(QKeySequence("Ctrl+R"), this);
-	QObject::connect(shortcut, SIGNAL(activated()), this, SLOT(resetCamera()));
+	QObject::connect(shortcut, SIGNAL(activated()), glScene, SLOT(resetCamera()));
+	// Ctrl + D pour reset le caméra
+	shortcut = new QShortcut(QKeySequence("Ctrl+D"), this);
+	QObject::connect(shortcut, SIGNAL(activated()), glScene, SLOT(resetData()));
 
 	// Connect signals
 	connect(ui.rbJarvis, SIGNAL(clicked()), this, SLOT(modeEnvelop()));
@@ -22,10 +25,11 @@ Math5A_Triangulation::Math5A_Triangulation(QWidget *parent)
 	connect(ui.rbNoneEnv, SIGNAL(clicked()), this, SLOT(modeEnvelop()));
 
 	connect(ui.rbTriSimple, SIGNAL(clicked()), this, SLOT(modeTriangulation()));
+	connect(ui.rbFlipping, SIGNAL(clicked()), this, SLOT(modeTriangulation())); 
 	connect(ui.rbTriDelaunay, SIGNAL(clicked()), this, SLOT(modeTriangulation()));
-	connect(ui.rbVoronoi, SIGNAL(clicked()), this, SLOT(modeTriangulation()));
 	connect(ui.rbNoneTri, SIGNAL(clicked()), this, SLOT(modeTriangulation()));
-	connect(ui.cbFlipping, SIGNAL(stateChanged(int)), glScene, SLOT(setFlipping(int)));
+	connect(ui.cbVoronoi, SIGNAL(stateChanged(int)), glScene, SLOT(setVoronoi(int)));
+	connect(ui.cbMovePoint, SIGNAL(stateChanged(int)), glScene, SLOT(setMovePoint(int)));
 
 	connect(ui.bResetData, SIGNAL(clicked()), glScene, SLOT(resetData()));
 	connect(ui.bResetCam, SIGNAL(clicked()), glScene, SLOT(resetCamera()));
@@ -55,9 +59,9 @@ void Math5A_Triangulation::modeTriangulation()
 {
 	if (ui.rbTriSimple->isChecked())
 		glScene->changeModeTriangulation(1);
-	else if (ui.rbTriDelaunay->isChecked())
+	else if (ui.rbFlipping->isChecked())
 		glScene->changeModeTriangulation(2);
-	else if (ui.rbVoronoi->isChecked())
+	else if (ui.rbTriDelaunay->isChecked())
 		glScene->changeModeTriangulation(3);
 	else
 		glScene->changeModeTriangulation(0);
