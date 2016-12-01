@@ -79,6 +79,8 @@ void GLWidget::resizeGL(int width, int height)
 
 void drawConvexHullFromSides();
 
+void drawConvexHull3D(vector<face> faces);
+
 // Fonction mettre à jour de la scène OpenGL
 void GLWidget::paintGL()
 {
@@ -100,11 +102,14 @@ void GLWidget::paintGL()
 	{
 	case 1:	// Triangulation simple (avec flipping ou non)
 		tgs = TriangulationSimple(points, _convexHull);
-		drawFaces(Fliping2(tgs));
+		//drawFaces(Fliping2(tgs));
+		drawFaces(tgs);
 		if (flipping)
 		{
 			drawLinesFromSides(Fliping(tgs));
 		}
+		//drawLinesFromPoints(Voronoi(points));
+		//drawPoints(Voronoi(points));
 		//drawConvexHullFromSides();
 		break;
 	case 2:	// Triangulation Delaunay
@@ -131,7 +136,12 @@ void GLWidget::paintGL()
 		break;
 	}
 
+	//movePoints(points);
+
 	drawPoints(points);
+
+
+	drawConvexHull3D(convexHull3D(points));
 
 	glPopMatrix();
 }
@@ -319,9 +329,9 @@ void  GLWidget::drawLinesFromPoints(vector<Point> pts)
 	int nbSides = pts.size();
 	if (nbSides == 0)
 		return;
-	glColor3f(0.0f, 0.0f, 150.0f);
+	glColor3f(150.0f, 150.0f, 0.0f);
 	glBegin(GL_LINES);
-	for (int i = 0; i < nbSides - 1; i+=2)
+	for (int i = 0; i < nbSides; i+=2)
 	{
 		glVertex3f(pts[i].coord.x(), pts[i].coord.y(), pts[i].coord.z());
 		glVertex3f(pts[i + 1].coord.x(), pts[i + 1].coord.y(), pts[i + 1].coord.z());
@@ -403,6 +413,29 @@ void drawConvexHullFromSides()
 	}
 }
 
+void drawConvexHull3D(vector<face> faces)
+{
+	int nbPoints = faces.size();
+	if (nbPoints == 0)
+		return;
+	glColor3f(150.0f, 150.0f, 150.0f);
+	for (int i = 0; i < faces.size(); i++)
+	{
+			glBegin(GL_LINES);
+			glVertex3f(faces[i].I[0], faces[i].I[0], faces[i].I[0]);
+			glVertex3f(faces[i].I[1], faces[i].I[1], faces[i].I[1]);
+			glEnd();
+			glBegin(GL_LINES);
+			glVertex3f(faces[i].I[1], faces[i].I[1], faces[i].I[1]);
+			glVertex3f(faces[i].I[2], faces[i].I[2], faces[i].I[2]);
+			glEnd();
+			glBegin(GL_LINES);
+			glVertex3f(faces[i].I[2], faces[i].I[2], faces[i].I[2]);
+			glVertex3f(faces[i].I[0], faces[i].I[0], faces[i].I[0]);
+			glEnd();
+	}
+}
+
 
 void GLWidget::keyPressEvent(QKeyEvent* e)
 {
@@ -446,4 +479,24 @@ void GLWidget::resetCamera() {
 	m_theta = 180.0f;
 	m_phi = 0.0f;
 	QApplication::setOverrideCursor(Qt::PointingHandCursor);
+}
+
+float a = 0.005f;
+float b = -0.0025f;
+
+void GLWidget::movePoints(vector<Point> &pts) {
+	for (int i = 0; i < pts.size(); i++)
+	{
+		float x_old = pts[i].coord.x(); float y_old = pts[i].coord.y();
+		if (i % 2 == 0) {
+			pts[i].coord.setX(x_old * cos(a) - y_old * sin(a));
+			pts[i].coord.setY(x_old * sin(a) + y_old * cos(a));
+		}
+		else {
+			pts[i].coord.setX(x_old * cos(b) - y_old * sin(b));
+			pts[i].coord.setY(x_old * sin(b) + y_old * cos(b));
+		}
+
+	}
+	//a += 0.005f;
 }
