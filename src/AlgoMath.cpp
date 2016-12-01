@@ -395,7 +395,8 @@ bool coordsSort(Point i, Point j) { return (i.coord.x()==j.coord.x() ? i.coord.y
 	return QVector3D(x, y, z);
 }*/
 
-vector<Face> TriangulationSimple(vector<Point> pts) {
+///-----------------------------------------------------------------------------------
+vector<Face> TriangulationSimple(vector<Point> pts, list<Side> &_convexHull) {
 	// 1
 	vector<Side> sides;
 	list<Side> convexHull;
@@ -445,7 +446,7 @@ vector<Face> TriangulationSimple(vector<Point> pts) {
 					//convexHull.push_back(Side(pts[j+1], pts[j+2]));
 					faces.push_back(Face(pts[j], pts[j+1], pts[i]));
 				}
-				convexHull.push_back(Side(pts[j], pts[i]));
+				convexHull.push_back(Side(pts[i], pts[j])); // Pas (j,i) !
 			}
 			else {
 				faces.push_back(Face(pts[0], pts[1], pts[2]));
@@ -476,6 +477,16 @@ vector<Face> TriangulationSimple(vector<Point> pts) {
 				faces.push_back(Face(vertA, nextVert, vertB));
 			}
 		}
+	}
+
+	list<Side>::iterator itE;
+	list<Side>::iterator fromEdge = convexHull.end();
+	list<Side>::iterator toEdge = convexHull.begin();
+
+	_convexHull.clear();
+	for (itE = convexHull.begin(); itE != convexHull.end(); ++itE)
+	{
+		_convexHull.push_back(*itE);
 	}
 
 	return faces;
@@ -604,65 +615,9 @@ bool isEdgeViewed(QVector3D P, QVector3D A, QVector3D B, QVector3D n)
 	return dot(normalAB, v) > 0 ? true : false;
 }
 
+///-----------------------------------------------------------------------------------
 vector<Side> Fliping(vector<Face> faces)
 {
-	/*for (int i = 0; i < faces.size(); i++)
-	{
-		std::vector<Side>& sides = faces[i].sides;
-		if (sides.size() > 2)
-		{
-			std::vector<Side>::iterator itE;
-			for (itE = sides.begin(); itE != sides.end(); ++itE)
-			{
-				int directFace = itE->getFaceA();
-				int adjacentFace = itE->getFaceB();
-
-				if (directFace != -1 && adjacentFace != -1) // Edge is between 2 faces
-				{
-					Face & faceA = m_mesh.getFace(directFace);
-					Face & faceB = m_mesh.getFace(adjacentFace);
-
-					// Get the oposite vertex to the edge
-					int idVertDirect = faceA.getThirdVertex(*itE);
-					int idVertAdjac = faceB.getThirdVertex(*itE);
-					assert(idVertDirect != -1 && idVertAdjac != -1);
-
-					Vertex vertEdgeA = m_mesh.getVertice(itE->getVertexA());
-					Vertex vertEdgeB = m_mesh.getVertice(itE->getVertexB());
-					Vertex vertDirect = m_mesh.getVertice(idVertDirect);
-					Vertex vertAdja = m_mesh.getVertice(idVertAdjac);
-
-					// check if vertex respect Delaunay critera 
-					float angleDirect = (vertEdgeA - vertDirect).angle(vertEdgeB - vertDirect);
-					float angleAdja = (vertEdgeA - vertAdja).angle(vertEdgeB - vertAdja);
-
-					// if nott respect critera
-					if (angleDirect + angleAdja > M_PI)
-					{
-						// Update the faces
-						faceA.setVertex(idVertDirect, itE->getVertexA(), idVertAdjac);
-						faceB.setVertex(idVertDirect, idVertAdjac, itE->getVertexB());
-
-						// update Edge
-						// Edge[vertA, Adj] => Face A (direct)
-						m_mesh.setEdge(itE->getVertexA(), idVertAdjac, directFace);
-						// Edge[Dir, vertA] => Face A
-						m_mesh.setEdge(idVertDirect, itE->getVertexA(), directFace);
-
-						// Edge[vertB, Dir] => Face B (Adjacent)
-						m_mesh.setEdge(itE->getVertexB(), idVertDirect, adjacentFace);
-						// Edge[Adj, vertB] => Face B (Adjacent)
-						m_mesh.setEdge(idVertAdjac, itE->getVertexB(), adjacentFace);
-
-						//	flip the Edge
-						itE->setVertexA(idVertAdjac);
-						itE->setVertexB(idVertDirect);
-					}
-				}
-			}
-		}
-	}*/
-
 	vector<Side> result;
 	vector<Side> AcTemp;
 	vector<Side> Ac;
@@ -858,67 +813,87 @@ vector<Point> GrahamScan(vector<Point> pts) {
 	return pts;
 }
 
+///-----------------------------------------------------------------------------------
 vector<Point> Voronoi(vector<Point> pts)
 {
 	vector<Face> tgs;
-	tgs = TriangulationSimple(pts);
+	list<Side> _convexHull;
+	tgs = TriangulationSimple(pts, _convexHull);
 	vector<Face> triangles = Fliping2(tgs);
 	vector<Side> sides = Fliping(tgs);
 
 	vector<QVector3D> centers;
 	vector<Point> result;
+	vector<QVector2D> alreadyChecked;
 
 	for (int i = 0; i < triangles.size(); i++)
 	{
 		//centers.push_back(CircumCircleCenter(fp2[i]));
 		QVector3D ccc = CircumCircleCenter(triangles[i]);
-		result.push_back(Point(ccc));
+		//result.push_back(Point(ccc));
 
 		for (int j = 0; j < sides.size(); j++)
 		{
 			int corr = 0;
+			// Pour chaque point du triangle courant
 			for (int h = 0; h < triangles[i].points.size(); h++)
 			{
 				if (sides[j].points[0].coord == triangles[i].points[h].coord || sides[j].points[1].coord == triangles[i].points[h].coord) {
 					corr++;
 				}
 			}
-			if(corr == 2)
-			if (sides[j].idFace2 == -1) {
-				Point A = sides[j].points[0];
-				Point B = sides[j].points[1];
+			// Si on est bien sur un coté du triangle
+			if (corr == 2) {
+				// Si on est sur un coté exterieur
+				if (sides[j].idFace2 == -1) {
+					Point A = sides[j].points[0];
+					Point B = sides[j].points[1];
 
-				Point C;
-				for (int y = 0; y < triangles[i].points.size(); y++)
-				{
-					if (A.coord != triangles[i].points[y].coord && B.coord != triangles[i].points[y].coord) {
-						C = triangles[i].points[y];
+					Point C;
+					for (int y = 0; y < triangles[i].points.size(); y++)
+					{
+						if (A.coord != triangles[i].points[y].coord && B.coord != triangles[i].points[y].coord) {
+							C = triangles[i].points[y];
+						}
 					}
-				}
 
-				QVector3D u = B.coord - A.coord;
-				QVector3D v = C.coord - A.coord;
-				QVector3D normal = crossProductNormalized(u, v);
-				normal = crossProduct(u, v);
+					/*QVector3D u = B.coord - A.coord;
+					QVector3D v = C.coord - A.coord;
+					QVector3D normal = crossProductNormalized(u, v);
+					normal = crossProduct(u, v);*/
 
-				QVector3D AB = B.coord - A.coord;
-				QVector3D AC = C.coord - A.coord;
-				QVector3D N = QVector3D(AB.y(), -AB.x(), 0);
-				float D = N.x()*AC.x() + N.y()*AC.y();
+					QVector3D AB = B.coord - A.coord;
+					QVector3D AC = C.coord - A.coord;
+					QVector3D N = QVector3D(AB.y(), -AB.x(), 0);
+					float D = N.x()*AC.x() + N.y()*AC.y();
 					if (D > 0)
 						N = -N;
 
-				result.push_back(Point(ccc));
-				QVector3D cc = (A.coord + B.coord) / 2;
-				QVector3D x = QVector3D(cc.x() - ccc.x(), cc.y() - ccc.y(), cc.z() - ccc.z());
-				//result.push_back(Point(ccc+x*200));
-				result.push_back(Point(ccc + N));
-				//result.push_back(Point(ccc + normal*200));
-				//result.push_back(Point(ccc));
+					result.push_back(Point(ccc));
+					//QVector3D cc = (A.coord + B.coord) / 2;
+					//QVector3D x = QVector3D(cc.x() - ccc.x(), cc.y() - ccc.y(), cc.z() - ccc.z());
+					//result.push_back(Point(ccc+x*200));
+					result.push_back(Point(ccc + N*10));
+					//result.push_back(Point(ccc + normal*200));
+					//result.push_back(Point(ccc));
+				}
+				// Si on est sur un coté adjacent
+				else {
+					QVector2D link; link.setX(i); link.setY(sides[j].idFace2);
+					if (std::find(alreadyChecked.begin(), alreadyChecked.end(), link) != alreadyChecked.end()) {
+					}
+					else {
+						QVector3D cccBis = CircumCircleCenter(triangles[sides[j].idFace2]);
+						result.push_back(Point(ccc));
+						result.push_back(Point(cccBis));
+						QVector2D _link; _link.setY(i); _link.setX(sides[j].idFace2);
+						alreadyChecked.push_back(_link);
+					}
+				}
 			}
 		}
 
-		result.push_back(Point(ccc));
+		//result.push_back(Point(ccc));
 	}
 
 
@@ -1007,31 +982,39 @@ vector<Face> Fliping2(vector<Face> faces)
 		Ac.pop_back();
 		if (A.idFace2 != -1) {
 			QVector3D p1;
+			int idP1;
 			QVector3D p2;
+			int idP2;
 			for (int i = 0; i <faces[A.idFace1].points.size(); i++) {
 				if (faces[A.idFace1].points[i].coord != A.points[0].coord && faces[A.idFace1].points[i].coord != A.points[1].coord) {
 					p1 = faces[A.idFace1].points[i].coord;
+					idP1 = i;
 					break;
 				}
 			}
 			for (int i = 0; i <faces[A.idFace2].points.size(); i++) {
 				if (faces[A.idFace2].points[i].coord != A.points[0].coord && faces[A.idFace2].points[i].coord != A.points[1].coord) {
 					p2 = faces[A.idFace2].points[i].coord;
+					idP2 = i;
 					break;
 				}
 			}
 			if (inCircumCircle(faces[A.idFace1], p2) || inCircumCircle(faces[A.idFace2], p1)) {
 				QVector3D p3;
+				int idP3;
 				QVector3D p4;
+				int idP4;
 				for (int i = 0; i <faces[A.idFace1].points.size(); i++) {
 					if (faces[A.idFace1].points[i].coord != p1 && faces[A.idFace1].points[i].coord != p2) {
 						p3 = faces[A.idFace1].points[i].coord;
+						idP3 = i;
 						break;
 					}
 				}
 				for (int i = 0; i <faces[A.idFace2].points.size(); i++) {
-					if (faces[A.idFace2].points[i].coord != p1 && faces[A.idFace2].points[i].coord != p2) {
+					if (faces[A.idFace2].points[i].coord != p1 && faces[A.idFace2].points[i].coord != p2 && faces[A.idFace2].points[i].coord != p3) {
 						p4 = faces[A.idFace2].points[i].coord;
+						idP4 = i;
 						break;
 					}
 				}

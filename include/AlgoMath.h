@@ -87,6 +87,8 @@ struct Side
 	bool operator!=(const Side& e) { return !(this->operator==(e)); }
 };
 
+//static list<Side>  _convexHull;
+
 struct Face
 {
 	int id;
@@ -144,7 +146,7 @@ int getSideIDFromPoints(vector<Side> s, Point x, Point y);
 //int getSideFromID(vector<Side> s, int id);
 //vector<Side> FindExternSides();
 //bool checkVisibilitySide(Side side, Point p);
-vector<Face> TriangulationSimple(vector<Point> pts);
+vector<Face> TriangulationSimple(vector<Point> pts, list<Side> &_convexHull);
 
 int getPointIndex(vector<Point> pts, int id);
 //vector<Side> GrahamScan(vector<Point> pts);

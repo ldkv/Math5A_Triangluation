@@ -8,6 +8,8 @@
 
 vector<Point> points;
 
+list<Side>  _convexHull;
+
 // Initialisation de la scène OpenGL
 GLWidget::GLWidget(QWidget *parent) :
 	QOpenGLWidget(parent), 
@@ -75,6 +77,8 @@ void GLWidget::resizeGL(int width, int height)
 	//qDebug() << -range * m_aspectRatio << " " << range * m_aspectRatio;
 }
 
+void drawConvexHullFromSides();
+
 // Fonction mettre à jour de la scène OpenGL
 void GLWidget::paintGL()
 {
@@ -95,12 +99,13 @@ void GLWidget::paintGL()
 	switch (modeTriangulation)
 	{
 	case 1:	// Triangulation simple (avec flipping ou non)
-		tgs = TriangulationSimple(points);
-		drawFaces(tgs);
+		tgs = TriangulationSimple(points, _convexHull);
+		drawFaces(Fliping2(tgs));
 		if (flipping)
 		{
 			drawLinesFromSides(Fliping(tgs));
 		}
+		//drawConvexHullFromSides();
 		break;
 	case 2:	// Triangulation Delaunay
 		drawFaces(faces);
@@ -144,7 +149,7 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
 	{
 		if (pointSelected == -1) {  
 			points.push_back(Point(convertXY(event->pos().x(), event->pos().y())));
-			Delaunay_addPoint(points, sides, faces, convertXY(event->pos().x(), event->pos().y()));
+			//Delaunay_addPoint(points, sides, faces, convertXY(event->pos().x(), event->pos().y()));
 			//qDebug() <<;
 			update();
 		}
@@ -316,7 +321,7 @@ void  GLWidget::drawLinesFromPoints(vector<Point> pts)
 		return;
 	glColor3f(0.0f, 0.0f, 150.0f);
 	glBegin(GL_LINES);
-	for (int i = 0; i < nbSides - 1; i++)
+	for (int i = 0; i < nbSides - 1; i+=2)
 	{
 		glVertex3f(pts[i].coord.x(), pts[i].coord.y(), pts[i].coord.z());
 		glVertex3f(pts[i + 1].coord.x(), pts[i + 1].coord.y(), pts[i + 1].coord.z());
@@ -377,6 +382,27 @@ void GLWidget::drawPoints(vector<Point> points)
 		glVertex3f(points[i].coord.x(), points[i].coord.y(), points[i].coord.z());
 	glEnd();
 }
+
+void drawConvexHullFromSides()
+{
+	int nbSides = _convexHull.size();
+	if (nbSides == 0)
+		return;
+	glColor3f(0.0f, 150.0f, 0.0f);
+
+	list<Side>::iterator itE;
+	list<Side>::iterator fromEdge = _convexHull.end();
+	list<Side>::iterator toEdge = _convexHull.begin();
+
+	for (itE = _convexHull.begin(); itE != _convexHull.end();itE++)
+	{
+		glBegin(GL_LINES);
+		glVertex3f(itE->points[0].coord.x(), itE->points[0].coord.y(), itE->points[0].coord.z());
+		glVertex3f(itE->points[1].coord.x(), itE->points[1].coord.y(), itE->points[1].coord.z());
+		glEnd();
+	}
+}
+
 
 void GLWidget::keyPressEvent(QKeyEvent* e)
 {
