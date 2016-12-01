@@ -157,7 +157,7 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
 	pointSelected = findNearestPoint(event->pos());
 	if (event->buttons() & Qt::LeftButton)
 	{
-		if (pointSelected == -1) {
+		if (pointSelected == -1) {  
 			points.push_back(Point(convertXY(event->pos().x(), event->pos().y())));
 			//Delaunay_addPoint(points, sides, faces, convertXY(event->pos().x(), event->pos().y()));
 			//qDebug() <<;
