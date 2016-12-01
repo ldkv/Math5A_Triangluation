@@ -8,6 +8,18 @@ static int globalId = 0;
 static int globalSideId = 0;
 static int globalFaceId = 0;
 
+
+#include <iostream>
+#include <cmath>
+#include <cstring>
+#include <cstdlib>
+#include <cstdio>
+#include <cassert>
+
+#define MAXN 1010
+
+typedef long long vtype;
+
 struct Point
 {
 	int id;
@@ -87,6 +99,8 @@ struct Side
 	bool operator!=(const Side& e) { return !(this->operator==(e)); }
 };
 
+//static list<Side>  _convexHull;
+
 struct Face
 {
 	int id;
@@ -159,7 +173,7 @@ int getSideIDFromPoints(vector<Side> s, Point x, Point y);
 //int getSideFromID(vector<Side> s, int id);
 //vector<Side> FindExternSides();
 //bool checkVisibilitySide(Side side, Point p);
-vector<Face> TriangulationSimple(vector<Point> pts);
+vector<Face> TriangulationSimple(vector<Point> pts, list<Side> &_convexHull);
 
 int getPointIndex(vector<Point> pts, int id);
 //vector<Side> GrahamScan(vector<Point> pts);
@@ -173,3 +187,40 @@ vector<Face> Fliping2(vector<Face> faces);
 bool inCircumCircle(Face f, QVector3D v);
 vector<Point> Voronoi(vector<Point> pts);
 QVector3D CircumCircleCenter(Face f);
+
+
+/* Basic 3D vector implementation */
+struct vec3 {
+	vec3() { X[0] = X[1] = X[2] = 0; }
+	vec3(vtype x, vtype y, vtype z) { X[0] = x; X[1] = y; X[2] = z; }
+
+	/* 3D cross product */
+	vec3 operator*(const vec3& v) const {
+		return vec3(X[1] * v.X[2] - X[2] * v.X[1],
+			X[2] * v.X[0] - X[0] * v.X[2],
+			X[0] * v.X[1] - X[1] * v.X[0]);
+	}
+
+	vec3 operator-(const vec3& v) const {
+		return vec3(X[0] - v.X[0], X[1] - v.X[1], X[2] - v.X[2]);
+	}
+
+	vec3 operator-() const {
+		return vec3(-X[0], -X[1], -X[2]);
+	}
+
+	vtype dot(const vec3& v) const {
+		return X[0] * v.X[0] + X[1] * v.X[1] + X[2] * v.X[2];
+	}
+
+	vtype X[3];
+};
+
+
+struct face {
+	vec3 norm;
+	vtype disc;
+	int I[3];
+};
+
+vector<face> convexHull3D(vector<Point> pts);

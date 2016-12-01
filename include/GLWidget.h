@@ -30,7 +30,7 @@ public:
 	~GLWidget();
 
 	
-	void changeModeEnvelop(int mode) { modeEnvelop = mode; qDebug() << modeEnvelop; }
+	void changeModeEnvelop(int mode) { modeEnvelop = mode; }
 	void changeModeTriangulation(int mode);
 
 protected:
@@ -51,10 +51,11 @@ protected:
 	void drawFacesWithID(vector<Face> faces, bool stipple);
 	void drawFaces(vector<Face> faces);
 	void drawPoly(vector<Point> pts, QVector3D color, float width);
+	void movePoints(vector<Point> &pts);
 
 public slots:
 	void timeOutSlot();
-	void setFlipping(int f) { flipping = f == 0 ? false : true; qDebug() << flipping; }
+	void setFlipping(int f) { flipping = f == 0 ? false : true; }
 	void resetData();
 	void resetCamera();
 

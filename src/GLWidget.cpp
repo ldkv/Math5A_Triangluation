@@ -8,6 +8,8 @@
 
 vector<Point> points;
 
+list<Side>  _convexHull;
+
 // Initialisation de la scène OpenGL
 GLWidget::GLWidget(QWidget *parent) :
 	QOpenGLWidget(parent), 
@@ -75,6 +77,10 @@ void GLWidget::resizeGL(int width, int height)
 	//qDebug() << -range * m_aspectRatio << " " << range * m_aspectRatio;
 }
 
+void drawConvexHullFromSides();
+
+void drawConvexHull3D(vector<face> faces);
+
 // Fonction mettre à jour de la scène OpenGL
 void GLWidget::paintGL()
 {
@@ -96,20 +102,24 @@ void GLWidget::paintGL()
 	switch (modeTriangulation)
 	{
 	case 1:	// Triangulation simple (avec flipping ou non)
-		tgs = TriangulationSimple(points);
+		tgs = TriangulationSimple(points, _convexHull);
+		//drawFaces(Fliping2(tgs));
 		drawFaces(tgs);
 		if (flipping)
 		{
 			drawLinesFromSides(Fliping(tgs));
 		}
+		//drawLinesFromPoints(Voronoi(points));
+		//drawPoints(Voronoi(points));
+		//drawConvexHullFromSides();
 		break;
 	case 2:	// Triangulation Delaunay
 		drawFacesWithID(faces, false);
 		break;
 	case 3:	// Diagramme de Voronoi
-		voronoi = diagramVoronoi(points, sides, faces);
-		//voronoi = Voronoi(points);
-		drawFacesWithID(faces, true);
+		//voronoi = diagramVoronoi(points, sides, faces);
+		voronoi = Voronoi(points);
+		drawFacesWithID(faces, false);
 		drawLinesFromPoints(voronoi);
 		drawPoints(voronoi);
 		break;
@@ -130,7 +140,12 @@ void GLWidget::paintGL()
 		break;
 	}
 
+	//movePoints(points);
+
 	drawPoints(points);
+
+
+	//drawConvexHull3D(convexHull3D(points));
 
 	glPopMatrix();
 }
@@ -281,7 +296,7 @@ void  GLWidget::drawLinesFromPoints(vector<Point> pts)
 	glLineStipple(10, 0xAAAA);
 	//glEnable(GL_LINE_STIPPLE);
 	glBegin(GL_LINES);
-	for (int i = 0; i < nbSides - 1; i++)
+	for (int i = 0; i < nbSides; i+=2)
 	{
 		glVertex3f(pts[i].coord.x(), pts[i].coord.y(), pts[i].coord.z());
 		glVertex3f(pts[i + 1].coord.x(), pts[i + 1].coord.y(), pts[i + 1].coord.z());
@@ -386,6 +401,50 @@ void GLWidget::drawPoints(vector<Point> points)
 	glEnd();
 }
 
+void drawConvexHullFromSides()
+{
+	int nbSides = _convexHull.size();
+	if (nbSides == 0)
+		return;
+	glColor3f(0.0f, 150.0f, 0.0f);
+
+	list<Side>::iterator itE;
+	list<Side>::iterator fromEdge = _convexHull.end();
+	list<Side>::iterator toEdge = _convexHull.begin();
+
+	for (itE = _convexHull.begin(); itE != _convexHull.end();itE++)
+	{
+		glBegin(GL_LINES);
+		glVertex3f(itE->points[0].coord.x(), itE->points[0].coord.y(), itE->points[0].coord.z());
+		glVertex3f(itE->points[1].coord.x(), itE->points[1].coord.y(), itE->points[1].coord.z());
+		glEnd();
+	}
+}
+
+void drawConvexHull3D(vector<face> faces)
+{
+	int nbPoints = faces.size();
+	if (nbPoints == 0)
+		return;
+	glColor3f(150.0f, 150.0f, 150.0f);
+	for (int i = 0; i < faces.size(); i++)
+	{
+			glBegin(GL_LINES);
+			glVertex3f(faces[i].I[0], faces[i].I[0], faces[i].I[0]);
+			glVertex3f(faces[i].I[1], faces[i].I[1], faces[i].I[1]);
+			glEnd();
+			glBegin(GL_LINES);
+			glVertex3f(faces[i].I[1], faces[i].I[1], faces[i].I[1]);
+			glVertex3f(faces[i].I[2], faces[i].I[2], faces[i].I[2]);
+			glEnd();
+			glBegin(GL_LINES);
+			glVertex3f(faces[i].I[2], faces[i].I[2], faces[i].I[2]);
+			glVertex3f(faces[i].I[0], faces[i].I[0], faces[i].I[0]);
+			glEnd();
+	}
+}
+
+
 void GLWidget::keyPressEvent(QKeyEvent* e)
 {
 	switch (e->key())
@@ -442,6 +501,26 @@ void GLWidget::resetCamera() {
 }
 
 
+float a = 0.005f;
+float b = -0.0025f;
+
+void GLWidget::movePoints(vector<Point> &pts) {
+	for (int i = 0; i < pts.size(); i++)
+	{
+		float x_old = pts[i].coord.x(); float y_old = pts[i].coord.y();
+		if (i % 2 == 0) {
+			pts[i].coord.setX(x_old * cos(a) - y_old * sin(a));
+			pts[i].coord.setY(x_old * sin(a) + y_old * cos(a));
+		}
+		else {
+			pts[i].coord.setX(x_old * cos(b) - y_old * sin(b));
+			pts[i].coord.setY(x_old * sin(b) + y_old * cos(b));
+		}
+
+	}
+	//a += 0.005f;
+}
+
 // Dessiner des côtés à partir des points
 /*void GLWidget::drawLines(vector<Point> points, vector<Side> sides)
 {
@@ -459,3 +538,4 @@ glVertex3f(points.at(indexP2).coord.x(), points.at(indexP2).coord.y(), points.at
 }
 glEnd();
 }*/
+
