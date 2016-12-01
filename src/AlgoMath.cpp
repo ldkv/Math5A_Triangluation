@@ -129,7 +129,14 @@ void Delaunay_addPoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &fa
 			// A.3.1) P est colinéaires aux sommets de T
 			if (Collinear(pts[0].coord - P, pts[0].coord - pts[1].coord))
 			{
-				//Point bary = barycenter(pts);
+				std::sort(pts.begin(), pts.end(), coordsSort);
+				if (pts[0].coord.x() < pts[1].coord.x())
+				{
+					if (P.x() < pts[0].coord.x())
+					{
+						// A FAIRE
+					}
+				}
 			}
 			// A.3.2) P n'est pas colinéaire
 			else
@@ -142,12 +149,12 @@ void Delaunay_addPoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &fa
 					pts[i].sides.push_back(La[La.size() - 1].id);
 					Snew.sides.push_back(La[La.size() - 1].id);
 					//if (i < N - 1)
-						//faces.push_back(Face(pts[i], pts[i + 1], Snew));
+					//faces.push_back(Face(pts[i], pts[i + 1], Snew));
 				}
 
 				for (int i = 0; i < sides.size(); i++)
 				{
-					int iL,iH;
+					int iL, iH;
 					for (int j = 0; j < La.size(); j++)
 					{
 						if (La[j].pLow == sides[i].pLow)
@@ -189,11 +196,9 @@ void Delaunay_addPoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &fa
 		}
 		// B.1.2) P hors de la triangulation
 		else
-		{
 			La = getViewedEdges(sides, pts, Snew);
-			qDebug() << "La size = " + La.size() << " && nbPoints = " + pts.size();
-		}
 
+		pts.push_back(Snew);
 		// B.2) Traitement des arêtes La
 		while (La.size() > 0)
 		{
@@ -212,6 +217,7 @@ void Delaunay_addPoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &fa
 					if (id != a.id)
 						La.push_back(getSidefromID(sides, id));
 			}
+			// B.2.2) P est à l'extérieur du triangle
 			else
 			{
 				addSide(a.pLow, Snew.id, sides, pts);
@@ -220,24 +226,302 @@ void Delaunay_addPoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &fa
 				int s2 = getSideIDfromPoints(sides, a.pHigh, Snew.id);
 				int k = 0;
 				if (s1 != -1 && s2 != -1)
-				{
-					faces.push_back(Face(s1, s2, a.id));
-					int newFaceID = faces[faces.size() - 1].id;
-					for (int i = 0; i < sides.size(); i++)
-					{
-						if (sides[i].id == a.id || sides[i].id == s1 || sides[i].id == s2)
-						{
-							if (sides[i].fLeft == -1)
-								sides[i].fLeft = newFaceID;
-							else
-								sides[i].fRight = newFaceID;
-						}
-					}
-				}
+					addFace(s1, s2, a.id, faces, sides);
 			}
 		}
-		pts.push_back(Snew);
 	}
+}
+
+int addFace(int id1, int id2, int id3, vector<Face> &faces, vector<Side> &sides)
+{
+	faces.push_back(Face(id1, id2, id3));
+	int newFaceID = faces[faces.size() - 1].id;
+	for (int i = 0; i < sides.size(); i++)
+	{
+		if (sides[i].id == id1 || sides[i].id == id2 || sides[i].id == id3)
+		{
+			if (sides[i].fLeft == -1)
+				sides[i].fLeft = newFaceID;
+			else
+				sides[i].fRight = newFaceID;
+		}
+	}
+	return newFaceID;
+}
+
+void addSidetoPoint(vector<Point> &pts, int ptID, int sideID)
+{
+	for (int i = 0; i < pts.size(); i++)
+		if (pts[i].id == ptID)
+		{
+			pts[i].sides.push_back(sideID);
+			break;
+		}
+}
+
+void removeSidefromPoint(vector<Point> &pts, int ptID, int sideID)
+{
+	for (int i = 0; i < pts.size(); i++)
+		if (pts[i].id == ptID)
+		{
+			int k = 0;
+			while (k++ < pts[i].sides.size() && pts[i].sides[k] != sideID);
+			if (k < pts[i].sides.size())
+				pts[i].sides.erase(pts[i].sides.begin() + k);
+			break;
+		}
+}
+
+void Delaunay_deletePoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &faces, int deleteID)
+{
+	// A) T ne contient pas de triangle
+	if (faces.size() <= 0)
+	{
+		// A.1) T contient 1 seul point
+		if (pts.size() == 1)
+		{
+			pts.clear();
+			return;
+		}
+		// A.2) T contient plusieurs points et ils sont tous colinéaires
+		// A.2.1) P appartient à une seule arête
+		if (pts[deleteID].sides.size() < 2)
+		{
+			if (pts[deleteID].sides.size() == 1)
+				deleteSidefromID(pts[deleteID].sides[0], sides, pts);
+			pts.erase(pts.begin() + deleteID);
+			return;
+		}
+		// A.2.2) P appartient à 2 arêtes
+		Side a1 = getSidefromID(sides, pts[deleteID].sides[0]);
+		int s1 = (a1.pHigh == pts[deleteID].id) ? a1.pLow : a1.pHigh;
+		for (int i = 0; i < sides.size(); i++)
+		{
+			if (sides[i].id == pts[deleteID].sides[1])
+			{
+				if (sides[i].pHigh == pts[deleteID].id)
+					sides[i].pHigh = s1;
+				else
+					sides[i].pLow = s1;
+				addSidetoPoint(pts, s1, sides[i].id);
+				break;
+			}
+		}
+		deleteSidefromID(pts[deleteID].sides[0], sides, pts);
+		return;
+	}
+	// B) T contient des triangles
+	// B.1) Déterminer les arêtes et triangles contenant P et les supprimer
+	vector<Side> La2, La1 = getIncidentEdgesOriented(pts[deleteID], sides, pts);
+	vector<Face> Lt = getIncidentFacesOriented(La1, faces, sides, La2);
+	for each (Face f in Lt)
+		deleteFacefromID(f.id, faces, sides);
+	for each (Side s in La1)
+		deleteSidefromID(s.id, sides, pts);
+	
+	QVector3D deletedP = pts[deleteID].coord;
+	pts.erase(pts.begin() + deleteID);
+	int N = La2.size();
+	Point S1, S2;
+	int foundVertex;
+	// B.2.1) La2 forme un polygone fermé
+	if (N > 2 && mutualPoint(La2[0], La2[N-1]) >= 0)
+	{
+		while (N > 3)
+		{
+			foundVertex = findPointConvexDelaunay(true, La2, pts, deletedP, S1, S2);
+			if (foundVertex != -1)
+			{
+				Side a1 = La2[foundVertex];
+				Side a2 = La2[foundVertex + 1 < N ? foundVertex + 1 : 0];
+				Side a3 = getSidefromID(sides, addSide(S1.id, S2.id, sides, pts));
+				addFace(a1.id, a2.id, a3.id, faces, sides);
+
+				for (int i = 0; i < La2.size(); i++)
+					if (La2[i].id == a1.id)
+					{
+						La2.erase(La2.begin() + i);
+						break;
+					}
+				for (int i = 0; i < La2.size(); i++)
+					if (La2[i].id == a2.id)
+					{
+						La2.erase(La2.begin() + i);
+						break;
+					}
+				La2.insert(La2.begin() + foundVertex, a3);
+				N = La2.size();
+			}
+		}
+		addFace(La2[0].id, La2[1].id, La2[2].id, faces, sides);
+	}
+	// B.2.2) La2 ne forme pas un polygone fermé
+	else
+	{
+		foundVertex = findPointConvexDelaunay(false, La2, pts, deletedP, S1, S2);
+		while (foundVertex != -1)
+		{
+			Side a1 = La2[foundVertex];
+			Side a2 = La2[foundVertex + 1];
+			Side a3 = getSidefromID(sides, addSide(S1.id, S2.id, sides, pts));
+			addFace(a1.id, a2.id, a3.id, faces, sides);
+
+			for (int i = 0; i < La2.size(); i++)
+				if (La2[i].id == a1.id)
+				{
+					La2.erase(La2.begin() + i);
+					break;
+				}
+			for (int i = 0; i < La2.size(); i++)
+				if (La2[i].id == a2.id)
+				{
+					La2.erase(La2.begin() + i);
+					break;
+				}
+			La2.insert(La2.begin() + foundVertex, a3);
+			N = La2.size();
+			foundVertex = findPointConvexDelaunay(false, La2, pts, deletedP, S1, S2);
+		}
+	}
+}
+
+// Chercher un sommet convexe tel que le circonscrit du triangle formé de ses 2 arêtes incidentes
+// ne contient aucun sommet de La2
+int findPointConvexDelaunay(bool closedPoly, vector<Side> La2, vector<Point> pts, QVector3D P, Point &S1, Point &S2)
+{
+	int N = La2.size();
+	if (!closedPoly)
+		N--;
+	int i;
+	for (i = 0; i < N; i++)
+	{
+		Side a1 = La2[i];
+		Side a2 = closedPoly ? La2[i + 1 < N ? i + 1 : 0] : La2[i + 1];
+		Point S = getPointfromID(pts, mutualPoint(a1, a2));
+		S1 = getPointfromID(pts, a1.pHigh == S.id ? a1.pLow : a1.pHigh);
+		S2 = getPointfromID(pts, a2.pHigh == S.id ? a2.pLow : a2.pHigh);
+		QLineF SS1(S.coord.x(), S.coord.y(), S1.coord.x(), S1.coord.y());
+		QLineF SS2(S.coord.x(), S.coord.y(), S2.coord.x(), S2.coord.y());
+		QLineF SP(S.coord.x(), S.coord.y(), P.x(), P.y());
+		qreal angle1 = SP.angleTo(SS1) < 180 ? SP.angleTo(SS1) : SS1.angleTo(SP);
+		qreal angle2 = SP.angleTo(SS2) < 180 ? SP.angleTo(SS2) : SS2.angleTo(SP);
+		//qreal angle = SS1.angleTo(SS2);
+		qDebug() << angle1 + angle2;
+		if (angle1 + angle2 >= 180)
+			continue;
+		bool notInside = true;
+		for each (Side a in La2)
+		{
+			if (a.pHigh != S.id && a.pHigh != S1.id && a.pHigh != S2.id
+				&& insideCircumCircle(getPointfromID(pts, a.pHigh).coord, S.coord, S1.coord, S2.coord))
+			{
+				notInside = false;
+				break;
+			}
+			if (a.pLow != S.id && a.pLow != S1.id && a.pLow != S2.id
+				&& insideCircumCircle(getPointfromID(pts, a.pLow).coord, S.coord, S1.coord, S2.coord))
+			{
+				notInside = false;
+				break;
+			}
+		}
+		if (notInside)
+			break;
+	}
+	return i < N ? i : -1;
+}
+
+// Retourner l'ID du point mutuel entre 2 arêtes, sinon -1
+int mutualPoint(Side a1, Side a2)
+{
+	if (a1.pHigh == a2.pHigh || a1.pHigh == a2.pLow)
+		return a1.pHigh;
+	if (a1.pLow == a2.pHigh || a1.pLow == a2.pLow)
+		return a1.pLow;
+	return -1;
+}
+// Chercher les triangles orientés incidents des arêtes La1
+// Retourner également la liste orientée La2 des arêtes incidentes aux triangles mais non à S
+vector<Face> getIncidentFacesOriented(vector<Side> La1, vector<Face> faces, vector<Side> sides, vector<Side> &La2)
+{
+	vector<Face> fs;
+	La1.push_back(La1[0]);
+	for (int i = 0; i < La1.size() - 1; i++)
+	{
+		for (int j = 0; j < faces.size(); j++)
+		{
+			int foundS1 = -1;
+			int foundS2 = -1;
+			for (int k = 0; k < 3; k++)
+			{
+				if (faces[j].sidesID[k] == La1[i].id)
+					foundS1 = k;
+				if (faces[j].sidesID[k] == La1[i+1].id)
+					foundS2 = k;
+			}
+			if (foundS1 != -1 && foundS2 != -1)
+			{
+				bool faceAlreadyExisted = false;
+				for (int i = 0; i < fs.size(); i++)
+				{
+					if (faces[j].id == fs[i].id)
+						faceAlreadyExisted = true;
+				}
+				if (!faceAlreadyExisted)
+				{
+					fs.push_back(faces[j]);
+					for (int k = 0; k < 3; k++)
+						if (k != foundS1 && k != foundS2)
+						{
+							La2.push_back(getSidefromID(sides, faces[j].sidesID[k]));
+							break;
+						}
+				}
+				break;
+			}
+		}
+	}
+	return fs;
+}
+
+// Chercher les arêtes incidentes depuis le point P
+vector<Side> getIncidentEdgesOriented(Point P, vector<Side> sides, vector<Point> pts)
+{
+	vector<Side> edges;
+	// Chercher une arête incidente externe depuis P
+	for (int i = 0; i < P.sides.size(); i++)
+	{
+		if (getSidefromID(sides, P.sides[i]).fRight == -1)
+		{
+			// Echanger la place de cette arête au début
+			int temp = P.sides[0];
+			P.sides[0] = P.sides[i];
+			P.sides[i] = temp;
+			break;
+		}
+	}
+	// La première arête sera choisie pour la référence de calcul des angles
+	Side a = getSidefromID(sides, P.sides[0]);
+	Point Q = getPointfromID(pts, a.pHigh == P.id ? a.pLow : a.pHigh);
+	QLineF v(P.coord.x(), P.coord.y(), Q.coord.x(), Q.coord.y());
+	vector<qreal> angles;
+	angles.push_back(0); 
+	edges.push_back(a);
+	
+	for (int i = 1; i < P.sides.size(); i++)
+	{
+		a = getSidefromID(sides, P.sides[i]);
+		Q = getPointfromID(pts, a.pHigh == P.id ? a.pLow : a.pHigh);
+		QLineF PQ(P.coord.x(), P.coord.y(), Q.coord.x(), Q.coord.y());
+		qreal angle = v.angleTo(PQ);
+		int k = 0;
+		for (k = 0; k < angles.size(); k++)
+			if (angle <= angles[k])
+				break;
+		angles.insert(angles.begin() + k, angle);
+		edges.insert(edges.begin() + k, a);
+	}
+	return edges;
 }
 
 int getSideIDfromPoints(vector<Side> sides, int p1, int p2)
@@ -263,7 +547,7 @@ int addSide(int p1, int p2, vector<Side> &sides, vector<Point> &pts)
 vector<Point> getVertexesfromFace(Face F, vector<Point> pts, vector<Side> sides)
 {
 	vector<Point> pts_list;
-	if (F.sides.size() == 3)
+	if (F.sidesID.size() == 3)
 	{
 		int id1, id2, id3;
 		id1 = getSidefromID(sides, F.sidesID[0]).pHigh;
@@ -770,6 +1054,7 @@ int getSideIDFromPoints(vector<Side> s, Point x, Point y) {
 			return s[i].id;
 		}
 	}
+	return -1;
 }
 
 int getPointIndex(vector<Point> pts, int id) {

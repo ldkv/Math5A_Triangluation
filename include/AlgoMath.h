@@ -130,6 +130,15 @@ void deleteFacefromID(int id, vector<Face> &faces, vector<Side> &sides);
 void deleteFacefromSide(vector<Side> &sides, int sideID, int faceID);
 vector<Point> getVertexesfromFace(Face F, vector<Point> pts, vector<Side> sides);
 int addSide(int p1, int p2, vector<Side> &sides, vector<Point> &pts);
+int addFace(int id1, int id2, int id3, vector<Face> &faces, vector<Side> &sides);
+void removeSidefromPoint(vector<Point> &pts, int ptID, int sideID);
+void addSidetoPoint(vector<Point> &pts, int ptID, int sideID);
+bool coordsSort(Point i, Point j);
+vector<Side> getIncidentEdgesOriented(Point P, vector<Side> sides, vector<Point> pts);
+vector<Face> getIncidentFacesOriented(vector<Side> La1, vector<Face> faces, vector<Side> sides, vector<Side> &La2);
+int mutualPoint(Side S1, Side S2);
+int findPointConvexDelaunay(bool closedPoly, vector<Side> La2, vector<Point> pts, QVector3D P, Point &S1, Point &S2);
+
 
 vector<Point> EnvelopeJarvis(vector<Point> pts);
 bool Collinear(QVector3D v1, QVector3D v2);
@@ -137,8 +146,9 @@ bool insideTriangle(QVector3D pt, QVector3D v1, QVector3D v2, QVector3D v3);
 bool insideCircumCircle(QVector3D pt, QVector3D v1, QVector3D v2, QVector3D v3);
 vector<Side> getViewedEdges(vector<Side> sides, vector<Point> pts, Point P); // methode utilisant les id
 void Delaunay_addPoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &faces, QVector3D P);
+void Delaunay_deletePoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &faces, int deleteID);
 
-
+//===========================================================================================================
 int getPointIndex(vector<Point> pts, int id);
 int getSideIDFromPoints(vector<Side> s, Point x, Point y);
 //int getSideFromID(vector<Side> s, int id);

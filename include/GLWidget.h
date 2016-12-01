@@ -31,7 +31,7 @@ public:
 
 	
 	void changeModeEnvelop(int mode) { modeEnvelop = mode; qDebug() << modeEnvelop; }
-	void changeModeTriangulation(int mode) { modeTriangulation = mode; qDebug() << modeTriangulation; }
+	void changeModeTriangulation(int mode);
 
 protected:
 	void mousePressEvent(QMouseEvent *event);
@@ -88,7 +88,7 @@ private:
 	int pointSelected;
 
 	int modeEnvelop = 0;
-	int modeTriangulation = 0;
+	int modeTriangulation = 2;
 	bool flipping = false;
 };
 

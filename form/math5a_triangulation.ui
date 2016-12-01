@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1510</width>
-    <height>966</height>
+    <width>1023</width>
+    <height>649</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,7 +25,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1510</width>
+     <width>1023</width>
      <height>21</height>
     </rect>
    </property>
@@ -111,6 +111,9 @@
             <property name="text">
              <string>Triangluation Delaunay</string>
             </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
            </widget>
           </item>
           <item>
@@ -126,7 +129,7 @@
              <string>Rien</string>
             </property>
             <property name="checked">
-             <bool>true</bool>
+             <bool>false</bool>
             </property>
            </widget>
           </item>
@@ -154,13 +157,6 @@
        </property>
        <property name="checkable">
         <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="uiDebug">
-       <property name="text">
-        <string>Debug</string>
        </property>
       </widget>
      </item>

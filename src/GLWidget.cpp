@@ -143,16 +143,20 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
 	if (event->buttons() & Qt::LeftButton)
 	{
 		if (pointSelected == -1) {  
-			//points.push_back(Point(convertXY(event->pos().x(), event->pos().y())));
-			Delaunay_addPoint(points, sides, faces, convertXY(event->pos().x(), event->pos().y()));
-			//qDebug() <<;
+			if (modeTriangulation == 2)
+				Delaunay_addPoint(points, sides, faces, convertXY(event->pos().x(), event->pos().y()));
+			else
+				points.push_back(Point(convertXY(event->pos().x(), event->pos().y())));
 			update();
 		}
 	}
 	else if (event->buttons() & Qt::RightButton)
 	{
 		if (pointSelected != -1) {
-			points.erase(points.begin()+pointSelected);
+			if (modeTriangulation == 2)
+				Delaunay_deletePoint(points, sides, faces, pointSelected);
+			else
+				points.erase(points.begin() + pointSelected);
 			update();
 		}
 	}
@@ -167,7 +171,14 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 	{
 		if (pointSelected >= 0)
 		{
-			points[pointSelected] = Point(convertXY(event->pos().x(), event->pos().y()));
+			if (modeTriangulation == 2)
+			{
+				Delaunay_deletePoint(points, sides, faces, pointSelected);
+				Delaunay_addPoint(points, sides, faces, convertXY(event->pos().x(), event->pos().y()));
+				pointSelected = points.size() - 1;
+			}
+			else
+				points[pointSelected] = Point(convertXY(event->pos().x(), event->pos().y()));
 			update();
 		}
 	}
@@ -408,6 +419,17 @@ void GLWidget::keyPressEvent(QKeyEvent* e)
 	}
 }
 
+void GLWidget::changeModeTriangulation(int mode)
+{
+	modeTriangulation = mode;
+	if (mode == 2)
+	{
+		vector<Point> temp = points;
+		resetData();
+		for (int i = 0; i < temp.size(); i++)
+			Delaunay_addPoint(points, sides, faces, temp[i].coord);
+	}
+}
 void GLWidget::resetData() 
 {
 	points.clear();
