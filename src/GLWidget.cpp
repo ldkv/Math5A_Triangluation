@@ -216,7 +216,6 @@ void GLWidget::paintGL()
 		break;
 	}
 
-	//move3DPoints(pointse);
 	if (movePoint)
 	{
 		movePoints(points);
@@ -226,16 +225,26 @@ void GLWidget::paintGL()
 	}
 	drawPoints(points, QVector3D(255.0f, 255.0f, 255.0f));
 
-	/*vector<QVector3D > t;
-	for (size_t i = 0; i < points.size(); i++)
-	{
-		points[i].coord.setZ((i + 1)*2);
-		t.push_back(points[i].coord);
-	}*/
-	//drawConvexHull(ch.process(t), points);
-
-	//drawConvexHull(ch.process(pointse), pointse);
-	//drawPointsch(pointse);
+	if (showEnvelop3D) {
+		if (modeTriangulation == 0) {
+			if (movePoint)
+			{
+				move3DPoints(pointse);
+			}
+			drawConvexHull(ch.process(pointse), pointse);
+			drawPointsch(pointse);
+		}
+		else
+		{
+			vector<QVector3D > t;
+			for (size_t i = 0; i < points.size(); i++)
+			{
+				points[i].coord.setZ((i + 1) * 2);
+				t.push_back(points[i].coord);
+			}
+			drawConvexHull(ch.process(t), points);
+		}
+	}
 
 	glPopMatrix();
 }
