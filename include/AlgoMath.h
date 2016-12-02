@@ -224,3 +224,225 @@ struct face {
 };
 
 vector<face> convexHull3D(vector<Point> pts);
+
+
+static vector<QVector3D> fpoints;
+
+struct Face2
+{
+	int i0, i1, i2;
+	float a, b, c, d;
+
+	Face2(int i0o, int i1o, int i2o)
+	{
+
+		i0 = i0o;
+		i1 = i1o;
+		i2 = i2o;
+
+		computePlane();
+
+	}
+
+	void computePlane()
+	{
+		QVector3D v1 = fpoints[i0];
+		QVector3D v2 = fpoints[i1];
+		QVector3D v3 = fpoints[i2];
+
+		a = v1.y() * (v2.z() - v3.z()) + v2.y() * (v3.z() - v1.z()) + v3.y() * (v1.z() - v2.z());
+		b = v1.z() * (v2.x() - v3.x()) + v2.z() * (v3.x() - v1.x()) + v3.z() * (v1.x() - v2.x());
+		c = v1.x() * (v2.y() - v3.y()) + v2.x() * (v3.y() - v1.y()) + v3.x() * (v1.y() - v2.y());
+		d = -(v1.x() * (v2.y() * v3.z() - v3.y() * v2.z()) + v2.x() * (v3.y() * v1.z() - v1.y() * v3.z()) + v3.x() * (v1.y() * v2.z() - v2.y() * v1.z()));
+	}
+
+	bool isVisible(QVector3D p)
+	{
+
+		return (a * p.x() + b * p.y() + c * p.z() + d) > 0;
+
+	}
+
+	QVector3D centroid()
+	{
+
+		QVector3D p0 = fpoints[i0];
+		QVector3D p1 = fpoints[i1];
+		QVector3D p2 = fpoints[i2];
+		return QVector3D((p0.x() + p1.x() + p2.x()) / 3, (p0.y() + p1.y() + p2.y()) / 3, (p0.z() + p1.z() + p2.z()) / 3);
+
+	}
+
+	void flip()
+	{
+		int t = i0;
+		i0 = i1;
+		i1 = t;
+		computePlane();
+	}
+
+};
+
+struct ConvexHull
+{
+	vector<Face2> validFaces;
+	vector<Face2>  visibleFaces;
+	vector<Face2>  tmpFaces;
+
+	QVector3D centroid(vector<QVector3D> points, int index, Face2 face)
+	{
+
+		QVector3D p = points[index];
+		QVector3D p0 = points[face.i0];
+		QVector3D p1 = points[face.i1];
+		QVector3D p2 = points[face.i2];
+		return QVector3D((p.x() + p0.x() + p1.x() + p2.x()) / 4, (p.y() + p0.y() + p1.y() + p2.y()) / 4, (p.z() + p0.z() + p1.z() + p2.z()) / 4);
+
+	}
+
+	vector<int> process(vector<QVector3D> points)
+	{
+		vector<int> result;
+
+		if (points.size() < 4)
+		{
+			return result;
+		}
+
+		//local copy of the point set
+		//vertices = .concat();
+		//Face2.points = points;
+		fpoints = points;
+
+
+		//calculates the first convex tetrahedron
+
+		//creates a face with the first 3 vertices
+		Face2 face(0, 1, 2);
+
+		//this is the center of the tetrahedron, all face should point outwards:
+		//they should not be visible to the centroid
+		QVector3D v = centroid(points, 3, face);
+
+		if (face.isVisible(v)) face.flip();
+
+		Face2 face0 = Face2(3, face.i0, face.i1);
+		if (face0.isVisible(v)) face0.flip();
+
+		Face2 face1 = Face2(3, face.i1, face.i2);
+		if (face1.isVisible(v)) face1.flip();
+
+		Face2 face2 = Face2(3, face.i2, face.i0);
+		if (face2.isVisible(v)) face2.flip();
+
+
+		//store the tetrahedron faces in the valid faces list
+		vector<Face2> validFaces;
+		validFaces.push_back(face);
+		validFaces.push_back(face0);
+		validFaces.push_back(face1);
+		validFaces.push_back(face2);
+
+		visibleFaces.clear();
+		tmpFaces.clear();
+
+
+
+		//so as we have a convex tetrahedron, we can skip the first 4 points
+		for (int i = 4; i < points.size(); i++)
+		{
+			//for each avaiable vertices
+			v = points[i];
+
+			//checks the point's visibility from all faces
+			visibleFaces.clear();
+			for each(face in validFaces)
+			{
+				if (face.isVisible(v))
+				{
+					visibleFaces.push_back(face);
+				}
+			}
+
+			//the vertex is not visible : it is inside the convex hull, keep on
+			if (visibleFaces.size() == 0)
+			{
+				continue;
+			}
+
+			//the vertex is outside the convex hull
+			//delete all visible faces from the valid List
+			for each (face in visibleFaces)
+			{
+				//int pos = find(validFaces.begin(), validFaces.end(), face) - validFaces.begin();
+				//vector<int> index;
+				int index;
+				for (int y = 0; y < validFaces.size(); y++)
+				{
+					if (validFaces[y].i0 == face.i0 && validFaces[y].i1 == face.i1 && validFaces[y].i2 == face.i2) {
+						//index.push_back(y);
+						index = y;
+						break;
+					}
+				}
+				/*int offeset = 0;
+				for (int y = 0; y < index.size(); y++)
+				{
+					validFaces.erase(validFaces.begin() + y- offeset);
+					offeset++;
+				}*/
+				validFaces.erase(validFaces.begin() + index);
+				//validFaces.splice(validFaces.indexOf(face), 1);
+			}
+
+			//special case : only one face is visible
+			//it's ok to create 3 faces directly for they won't enclose any other point
+			if (visibleFaces.size() == 1)
+			{
+				face = visibleFaces[0];
+				validFaces.push_back(Face2(i, face.i0, face.i1));
+				validFaces.push_back(Face2(i, face.i1, face.i2));
+				validFaces.push_back(Face2(i, face.i2, face.i0));
+				continue;
+			}
+
+			//creates all possible new faces from the visibleFaces
+			tmpFaces.clear();
+			for each(face in visibleFaces)
+			{
+				tmpFaces.push_back(Face2(i, face.i0, face.i1));
+				tmpFaces.push_back(Face2(i, face.i1, face.i2));
+				tmpFaces.push_back(Face2(i, face.i2, face.i0));
+			}
+
+			//Face2 other(0, 0, 0);
+			for each(face in tmpFaces)
+			{
+				//search if there is a point in front of the face : 
+				//this means the face doesn't belong to the convex hull
+				bool search = false;
+				for each(Face2 other in tmpFaces)
+				{
+					if (face.i0 != other.i0 || face.i1 != other.i1 || face.i2 != other.i2)
+					{
+						if (face.isVisible(other.centroid()))
+						{
+							search = true;
+							break;
+						}
+					}
+				}
+				//the face has no point in front of it
+				if (!search) validFaces.push_back(face);
+			}
+		}
+
+		for each(face in validFaces)
+		{
+			result.push_back(face.i0);
+			result.push_back(face.i1);
+			result.push_back(face.i2);
+		}
+		return result;
+	}
+};
