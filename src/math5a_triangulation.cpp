@@ -15,27 +15,25 @@ Math5A_Triangulation::Math5A_Triangulation(QWidget *parent)
 	// Ctrl + R pour reset le caméra
 	shortcut = new QShortcut(QKeySequence("Ctrl+R"), this);
 	QObject::connect(shortcut, SIGNAL(activated()), glScene, SLOT(resetCamera()));
-	// Ctrl + D pour reset le caméra
+	// Ctrl + D pour réinitialsier les données
 	shortcut = new QShortcut(QKeySequence("Ctrl+D"), this);
 	QObject::connect(shortcut, SIGNAL(activated()), glScene, SLOT(resetData()));
 
 	// Signal pour mettre à jour les lablels des Timers
 	connect(glScene, SIGNAL(labelChanged(int)), this, SLOT(updateLabels(int)));
 
-	// Connect signals
+	// Connect signals aux éléments de l'UI
 	connect(ui.rbJarvis, SIGNAL(clicked()), this, SLOT(modeEnvelop()));
 	connect(ui.rbGrahamScan, SIGNAL(clicked()), this, SLOT(modeEnvelop()));
 	connect(ui.rbNoneEnv, SIGNAL(clicked()), this, SLOT(modeEnvelop()));
-
+	connect(ui.cbShowEnvelop3D, SIGNAL(stateChanged(int)), glScene, SLOT(setEnvelop3D(int)));
 	connect(ui.rbTriSimple, SIGNAL(clicked()), this, SLOT(modeTriangulation()));
 	connect(ui.rbFlipping, SIGNAL(clicked()), this, SLOT(modeTriangulation())); 
 	connect(ui.rbTriDelaunay, SIGNAL(clicked()), this, SLOT(modeTriangulation()));
 	connect(ui.rbNoneTri, SIGNAL(clicked()), this, SLOT(modeTriangulation()));
 	connect(ui.cbVoronoi, SIGNAL(stateChanged(int)), glScene, SLOT(setVoronoi(int)));
 	connect(ui.cbMovePoint, SIGNAL(stateChanged(int)), glScene, SLOT(setMovePoint(int)));
-	connect(ui.cbShowEnvelop3D, SIGNAL(stateChanged(int)), glScene, SLOT(setEnvelop3D(int)));
 	connect(ui.cbShowGrid, SIGNAL(stateChanged(int)), glScene, SLOT(setGrid(int)));
-	
 	connect(ui.bResetData, SIGNAL(clicked()), glScene, SLOT(resetData()));
 	connect(ui.bResetCam, SIGNAL(clicked()), glScene, SLOT(resetCamera()));
 	connect(ui.bQuit, SIGNAL(clicked()), this, SLOT(quit()));
@@ -46,6 +44,7 @@ Math5A_Triangulation::~Math5A_Triangulation()
 	delete[] glScene;
 }
 
+// Mettre à jour les labels des Timers
 void Math5A_Triangulation::updateLabels(int label)
 {
 	switch (label)
@@ -70,6 +69,7 @@ void Math5A_Triangulation::updateLabels(int label)
 	}
 }
 
+// Mettre à jour le mode d'envelope
 void Math5A_Triangulation::modeEnvelop() 
 {
 	if (ui.rbJarvis->isChecked())
@@ -84,6 +84,7 @@ void Math5A_Triangulation::modeEnvelop()
 		glScene->changeModeEnvelop(0);
 }
 
+// Mettre à jour le mode de Triangulation
 void Math5A_Triangulation::modeTriangulation()
 {
 	if (ui.rbTriSimple->isChecked())
