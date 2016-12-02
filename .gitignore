@@ -14,3 +14,4 @@ GeneratedFiles/
 ipch/
 *.db
 *.ipch
+Release/
