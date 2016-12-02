@@ -512,8 +512,13 @@ void GLWidget::changeModeTriangulation(int mode)
 void GLWidget::recalculateDelaunay(vector<Point> pts)
 {
 	resetData();
+	QElapsedTimer timer;
+	timer.start();
 	for (int i = 0; i < pts.size(); i++)
 		Delaunay_addPoint(points, sides, faces, pts[i].coord);
+	int time = timer.nsecsElapsed() / 1000;
+	labelTimer[4] = QString::number(time) + " us";
+	emit labelChanged(4);
 	needUpdate = true;
 }
 
