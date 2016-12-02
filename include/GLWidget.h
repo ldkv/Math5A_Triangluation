@@ -58,6 +58,8 @@ public slots:
 	void timeOutSlot();
 	void setVoronoi(int f) { showVoronoi = f == 0 ? false : true; }
 	void setMovePoint(int m) { movePoint = m == 0 ? false : true; }
+	void setGrid(int g) { showGrid = g == 0 ? false : true; }
+	void setEnvelop3D(int e) { showEnvelop3D = e == 0 ? false : true; qDebug() << "here"; }
 	void resetData();
 	void resetCamera();
 
@@ -94,6 +96,8 @@ private:
 	int modeTriangulation = 3;
 	bool showVoronoi = false;
 	bool movePoint = false;
+	bool showEnvelop3D = false;
+	bool showGrid = false;
 };
 
 

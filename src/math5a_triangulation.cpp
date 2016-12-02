@@ -30,7 +30,9 @@ Math5A_Triangulation::Math5A_Triangulation(QWidget *parent)
 	connect(ui.rbNoneTri, SIGNAL(clicked()), this, SLOT(modeTriangulation()));
 	connect(ui.cbVoronoi, SIGNAL(stateChanged(int)), glScene, SLOT(setVoronoi(int)));
 	connect(ui.cbMovePoint, SIGNAL(stateChanged(int)), glScene, SLOT(setMovePoint(int)));
-
+	connect(ui.cbShowEnvelop3D, SIGNAL(stateChanged(int)), glScene, SLOT(setEnvelop3D(int)));
+	connect(ui.cbShowGrid, SIGNAL(stateChanged(int)), glScene, SLOT(setGrid(int)));
+	
 	connect(ui.bResetData, SIGNAL(clicked()), glScene, SLOT(resetData()));
 	connect(ui.bResetCam, SIGNAL(clicked()), glScene, SLOT(resetCamera()));
 	connect(ui.bQuit, SIGNAL(clicked()), this, SLOT(quit()));

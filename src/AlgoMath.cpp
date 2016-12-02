@@ -82,9 +82,8 @@ void deleteFacefromSide(vector<Side> &sides, int sideID, int faceID)
 		if (sides[i].id == sideID)
 		{
 			if (sides[i].fLeft == faceID)
-				sides[i].fLeft = -1;
-			else
-				sides[i].fRight = -1;
+				sides[i].fLeft = sides[i].fRight;
+			sides[i].fRight = -1;
 			break;
 		}
 	}
@@ -130,10 +129,9 @@ vector<Point> diagramVoronoi(vector<Point> pts, vector<Side> sides, vector<Face>
 	for (int i = 0; i < faces.size(); i++)
 	{
 		vector<Point> v = getVertexesfromFace(faces[i], pts, sides);
-		Ct[i] = circumCircleCenter(v[0].coord, v[1].coord, v[2].coord);
+		Ct[faces[i].id] = circumCircleCenter(v[0].coord, v[1].coord, v[2].coord);
 	}
 	
-	vector<Point> A;
 	for (int i = 0; i < sides.size(); i++)
 	{
 		QVector3D A1, A2;
@@ -145,7 +143,20 @@ vector<Point> diagramVoronoi(vector<Point> pts, vector<Side> sides, vector<Face>
 		{
 			QVector3D S1 = getPointfromID(pts, sides[i].pLow).coord;
 			QVector3D S2 = getPointfromID(pts, sides[i].pHigh).coord;
+			QVector3D S3;
+			Face f = getFacefromID(faces, sides[i].fLeft);
+			for (int j = 0; j < f.sidesID.size(); j++)
+				if (f.sidesID[j] != sides[i].id)
+				{
+					Side a = getSidefromID(sides, f.sidesID[j]);
+					if (a.pHigh != sides[i].pHigh && a.pHigh != sides[i].pLow)
+						S3 = getPointfromID(pts, a.pHigh).coord;
+					else
+						S3 = getPointfromID(pts, a.pLow).coord;
+				}
 			QVector3D n = (S1 + S2) / 2 - A1;
+			if (QVector3D::dotProduct((S3 - S1), n)*QVector3D::dotProduct((A1 - S1), n) < 0)
+				n = -n;
 			float x = A1.x() + n.x() * scale;
 			float y = A1.y() + n.y() * scale;
 			A2 = QVector3D(x, y, 0);
@@ -203,7 +214,25 @@ void Delaunay_addPoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &fa
 					return;
 				}
 				// A.3.1.3)
-
+				float dP = pts[0].coord.distanceToPoint(P);
+				int index = 1;
+				while (pts[0].coord.distanceToPoint(pts[index].coord) < dP)
+					index++;
+				for (int i = 0; i < sides.size(); i++)
+				{
+					if ((sides[i].pLow == pts[index - 1].id && sides[i].pHigh == pts[index].id)
+						|| (sides[i].pLow == pts[index].id  && sides[i].pHigh == pts[index - 1].id))
+					{
+						if (sides[i].pLow == pts[index].id)
+							sides[i].pLow = Snew.id;
+						else
+							sides[i].pHigh = Snew.id;
+						Snew.sides.push_back(sides[i].id);
+						deleteSidefromPoint(pts, sides[i].id, pts[index].id);
+						break;
+					}
+				}
+				addSide(Snew.id, pts[index].id, sides, pts);
 			}
 			// A.3.2) P n'est pas colinéaire
 			else
@@ -243,7 +272,6 @@ void Delaunay_addPoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &fa
 	else
 	{
 		// B.1) Déterminer la liste des arêtes La
-		Point Snew = Point(P);
 		vector<Side> La;
 		int idInside;
 		for (idInside = 0; idInside < faces.size(); idInside++)
@@ -975,7 +1003,7 @@ bool isEdgeViewed(QVector3D P, QVector3D A, QVector3D B, QVector3D n)
 }
 
 ///-----------------------------------------------------------------------------------
-vector<Side> Fliping(vector<Face> faces)
+vector<Side> Flipping(vector<Face> faces)
 {
 	vector<Side> result;
 	vector<Side> AcTemp;
@@ -1179,8 +1207,8 @@ vector<Point> Voronoi(vector<Point> pts)
 	vector<Face> tgs;
 	list<Side> _convexHull;
 	tgs = TriangulationSimple(pts, _convexHull);
-	vector<Face> triangles = Fliping2(tgs);
-	vector<Side> sides = Fliping(tgs);
+	vector<Face> triangles = Flipping2(tgs);
+	vector<Side> sides = Flipping(tgs);
 
 	vector<QVector3D> centers;
 	vector<Point> result;
@@ -1298,7 +1326,7 @@ vector<Point> Voronoi(vector<Point> pts)
 	return result;
 }
 
-vector<Face> Fliping2(vector<Face> faces)
+vector<Face> Flipping2(vector<Face> faces)
 {
 	vector<Side> AcTemp;
 	vector<Side> Ac;

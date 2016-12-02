@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1023</width>
-    <height>649</height>
+    <width>1111</width>
+    <height>722</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,7 +25,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1023</width>
+     <width>1111</width>
      <height>21</height>
     </rect>
    </property>
@@ -65,9 +65,29 @@
          </widget>
         </item>
         <item>
+         <widget class="QLabel" name="laTimeJarvis">
+          <property name="text">
+           <string>ms</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QRadioButton" name="rbGrahamScan">
           <property name="text">
            <string>Graham-Scan</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="laTimeGraham">
+          <property name="text">
+           <string>ms</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
           </property>
          </widget>
         </item>
@@ -78,6 +98,13 @@
           </property>
           <property name="checked">
            <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="cbShowEnvelop3D">
+          <property name="text">
+           <string>Surpirse Mathafaka</string>
           </property>
          </widget>
         </item>
@@ -98,9 +125,29 @@
          </widget>
         </item>
         <item>
+         <widget class="QLabel" name="laTimeTriSimple">
+          <property name="text">
+           <string>ms</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QRadioButton" name="rbFlipping">
           <property name="text">
            <string>Flipping</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="laTimeFlipping">
+          <property name="text">
+           <string>ms</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
           </property>
          </widget>
         </item>
@@ -111,6 +158,16 @@
           </property>
           <property name="checked">
            <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="laTimeDelaunay">
+          <property name="text">
+           <string>ms</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
           </property>
          </widget>
         </item>
@@ -129,6 +186,9 @@
        <zorder>rbNoneTri</zorder>
        <zorder>rbTriDelaunay</zorder>
        <zorder>rbFlipping</zorder>
+       <zorder>laTimeTriSimple</zorder>
+       <zorder>laTimeFlipping</zorder>
+       <zorder>laTimeDelaunay</zorder>
       </widget>
      </item>
      <item>
@@ -168,6 +228,13 @@
        </property>
        <property name="checkable">
         <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="cbShowGrid">
+       <property name="text">
+        <string>Afficher la grille et les axes</string>
        </property>
       </widget>
      </item>

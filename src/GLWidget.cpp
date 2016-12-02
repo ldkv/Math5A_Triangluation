@@ -94,16 +94,22 @@ void GLWidget::paintGL()
 	glRotatef(m_theta, 1.0f, 0.0f, 0.0f);
 	glRotatef(m_phi, 0.0f, 0.0f, 1.0f);
 
-	//drawGridandAxes();
-
+	if (showGrid)
+		drawGridandAxes();
+	
 	// Triangulation
 	//vector<Face> tgs;
+	QElapsedTimer timer;
+	int time;
 	switch (modeTriangulation)
 	{
 	case 1:	// Triangulation simple (avec flipping ou non)
 		faces.clear();
+		timer.start();
 		faces = TriangulationSimple(points, _convexHull);
-		//drawFaces(Fliping2(tgs));
+		time = timer.elapsed();
+		//ui.laTimeTriSimple->setText(QString::number(time) + "");
+		//drawFaces(Flipping2(tgs));
 		drawFaces(faces);
 		//drawLinesFromPoints(Voronoi(points));
 		//drawPoints(Voronoi(points));
@@ -112,7 +118,7 @@ void GLWidget::paintGL()
 	case 2:	// Flipping
 		faces.clear();
 		faces = TriangulationSimple(points, _convexHull);
-		drawLinesFromSides(Fliping(faces));
+		drawLinesFromSides(Flipping(faces));
 		break;
 	case 3:	// Triangulation Delaunay
 		drawFacesWithID(faces, false);
@@ -124,10 +130,11 @@ void GLWidget::paintGL()
 	if (showVoronoi)
 	{
 		vector<Point> voronoi;
-		if (modeTriangulation == 3)
-			voronoi = diagramVoronoi(points, sides, faces);
-		else
-			voronoi = Voronoi(points);
+		if (modeTriangulation != 3)
+			recalculateDelaunay(points);
+		voronoi = diagramVoronoi(points, sides, faces);
+		//else
+			//voronoi = Voronoi(points);
 		drawLinesFromPoints(voronoi);
 		drawPoints(voronoi, QVector3D(150.0f, 0, 0));
 	}
@@ -153,8 +160,6 @@ void GLWidget::paintGL()
 	}
 
 	drawPoints(points, QVector3D(255.0f, 255.0f, 255.0f));
-
-
 	//drawConvexHull3D(convexHull3D(points));
 
 	glPopMatrix();
