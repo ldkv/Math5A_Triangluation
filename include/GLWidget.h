@@ -52,6 +52,7 @@ protected:
 	void drawFaces(vector<Face> faces);
 	void drawPoly(vector<Point> pts, QVector3D color, float width);
 	void movePoints(vector<Point> &pts);
+	void move3DPoints(vector<QVector3D> &pts);
 
 public slots:
 	void timeOutSlot();

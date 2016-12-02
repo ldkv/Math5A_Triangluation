@@ -6,9 +6,52 @@
 #include <math.h>
 #include "AlgoMath.h"
 
+#include <stdlib.h> 
+#include <time.h> 
+
 vector<Point> points;
+vector<int> indices;
+vector<QVector3D> pointse;
 
 list<Side>  _convexHull;
+void drawConvexHull(vector<int> ids, vector<Point> pts);
+void drawConvexHull(vector<int> ids, vector<QVector3D> pts);
+void drawPointsch(vector<QVector3D> points);
+ConvexHull ch;
+
+QVector3D randomVector(float offset)
+{
+	float radius = (0.5f + rand() * 0.5) * offset;
+
+	float theta = rand() * 2 * 3.14159;
+	float phi = rand() * 3.14159;
+
+	return QVector3D(cos(theta) * sin(phi) * radius*1.5,
+		cos(phi) * radius * 0.1,
+		sin(theta) * sin(phi) * radius*15);
+}
+void reset()
+{
+	srand(time(NULL));
+	pointse.clear();
+	float size = 0.03;
+	int i = 100;
+	while (i--)
+	{
+		pointse.push_back(randomVector(size));
+	}
+	/*pointse.push_back(QVector3D(-50,-50,-50));
+	pointse.push_back(QVector3D(-50, 50, -50));
+	pointse.push_back(QVector3D(-49, -50, 50));
+	pointse.push_back(QVector3D(-50, 50, 50));
+	pointse.push_back(QVector3D(50, -50, -50));
+	pointse.push_back(QVector3D(50, -50, 50));
+	pointse.push_back(QVector3D(50, 50, 50));
+	pointse.push_back(QVector3D(50, 50, -50));
+	pointse.push_back(QVector3D(0, 0, 0));*/
+
+	indices = ch.process(pointse);
+}
 
 // Initialisation de la scène OpenGL
 GLWidget::GLWidget(QWidget *parent) :
@@ -47,6 +90,8 @@ void GLWidget::initializeGL()
 	glDepthFunc(GL_LEQUAL);
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	range = 100.0;
+
+	reset();
 }
 
 // Redimensionner de la scène pour adapter à la fenêtre principale
@@ -78,8 +123,6 @@ void GLWidget::resizeGL(int width, int height)
 }
 
 void drawConvexHullFromSides();
-
-void drawConvexHull3D(vector<face> faces);
 
 // Fonction mettre à jour de la scène OpenGL
 void GLWidget::paintGL()
@@ -140,12 +183,20 @@ void GLWidget::paintGL()
 		break;
 	}
 
-	//movePoints(points);
+	//move3DPoints(pointse);
 
 	drawPoints(points);
 
+	vector<QVector3D > t;
+	for (size_t i = 0; i < points.size(); i++)
+	{
+		points[i].coord.setZ((i + 1)*2);
+		t.push_back(points[i].coord);
+	}
+	//drawConvexHull(ch.process(t), points);
 
-	//drawConvexHull3D(convexHull3D(points));
+	//drawConvexHull(ch.process(pointse), pointse);
+	//drawPointsch(pointse);
 
 	glPopMatrix();
 }
@@ -421,27 +472,61 @@ void drawConvexHullFromSides()
 	}
 }
 
-void drawConvexHull3D(vector<face> faces)
-{
-	int nbPoints = faces.size();
+void drawConvexHull(vector<int> ids, vector<Point> pts) {
+	int nbPoints = ids.size();
 	if (nbPoints == 0)
 		return;
-	glColor3f(150.0f, 150.0f, 150.0f);
-	for (int i = 0; i < faces.size(); i++)
+	glColor3f(0.0f, 150.0f, 0.0f);
+	for (int i = 0; i < ids.size(); i+=3)
 	{
-			glBegin(GL_LINES);
-			glVertex3f(faces[i].I[0], faces[i].I[0], faces[i].I[0]);
-			glVertex3f(faces[i].I[1], faces[i].I[1], faces[i].I[1]);
-			glEnd();
-			glBegin(GL_LINES);
-			glVertex3f(faces[i].I[1], faces[i].I[1], faces[i].I[1]);
-			glVertex3f(faces[i].I[2], faces[i].I[2], faces[i].I[2]);
-			glEnd();
-			glBegin(GL_LINES);
-			glVertex3f(faces[i].I[2], faces[i].I[2], faces[i].I[2]);
-			glVertex3f(faces[i].I[0], faces[i].I[0], faces[i].I[0]);
-			glEnd();
+		glBegin(GL_LINES);
+		glVertex3f(pts[ids[i]].coord[0], pts[ids[i]].coord[1], pts[ids[i]].coord[2]);
+		glVertex3f(pts[ids[i+1]].coord[0], pts[ids[i+1]].coord[1], pts[ids[i+1]].coord[2]);
+		glEnd();
+		glBegin(GL_LINES);
+		glVertex3f(pts[ids[i+1]].coord[0], pts[ids[i+1]].coord[1], pts[ids[i+1]].coord[2]);
+		glVertex3f(pts[ids[i+2]].coord[0], pts[ids[i+2]].coord[1], pts[ids[i+2]].coord[2]);
+		glEnd();
+		glBegin(GL_LINES);
+		glVertex3f(pts[ids[i+2]].coord[0], pts[ids[i+2]].coord[1], pts[ids[i+2]].coord[2]);
+		glVertex3f(pts[ids[i]].coord[0], pts[ids[i]].coord[1], pts[ids[i]].coord[2]);
+		glEnd();
 	}
+}
+
+void drawConvexHull(vector<int> ids, vector<QVector3D> pts) {
+	int nbPoints = ids.size();
+	if (nbPoints == 0)
+		return;
+	glColor3f(0.0f, 150.0f, 0.0f);
+	for (int i = 0; i < ids.size(); i += 3)
+	{
+		glBegin(GL_LINES);
+		glVertex3f(pts[ids[i]].x(), pts[ids[i]].y(), pts[ids[i]].z());
+		glVertex3f(pts[ids[i + 1]].x(), pts[ids[i + 1]].y(), pts[ids[i + 1]].z());
+		glEnd();
+		glBegin(GL_LINES);
+		glVertex3f(pts[ids[i + 1]].x(), pts[ids[i + 1]].y(), pts[ids[i + 1]].z());
+		glVertex3f(pts[ids[i + 2]].x(), pts[ids[i + 2]].y(), pts[ids[i + 2]].z());
+		glEnd();
+		glBegin(GL_LINES);
+		glVertex3f(pts[ids[i + 2]].x(), pts[ids[i + 2]].y(), pts[ids[i + 2]].z());
+		glVertex3f(pts[ids[i]].x(), pts[ids[i]].y(), pts[ids[i]].z());
+		glEnd();
+	}
+}
+
+void drawPointsch(vector<QVector3D> points)
+{
+	int nbPoints = points.size();
+	if (nbPoints == 0)
+		return;
+	glColor3f(1, 0, 1);
+	glPointSize(POINT_SIZE);
+	glBegin(GL_POINTS);
+	for (int i = 0; i < nbPoints; i++)
+		glVertex3f(points[i].x(), points[i].y(), points[i].z());
+	glEnd();
 }
 
 
@@ -501,13 +586,14 @@ void GLWidget::resetCamera() {
 }
 
 
-float a = 0.005f;
-float b = -0.0025f;
+float a = 0.0025f;
+float b = -0.0010f;
+float c = 0.0025f;
 
 void GLWidget::movePoints(vector<Point> &pts) {
 	for (int i = 0; i < pts.size(); i++)
 	{
-		float x_old = pts[i].coord.x(); float y_old = pts[i].coord.y();
+		float x_old = pts[i].coord.x(); float y_old = pts[i].coord.y(); float z_old = pts[i].coord.z();
 		if (i % 2 == 0) {
 			pts[i].coord.setX(x_old * cos(a) - y_old * sin(a));
 			pts[i].coord.setY(x_old * sin(a) + y_old * cos(a));
@@ -516,26 +602,22 @@ void GLWidget::movePoints(vector<Point> &pts) {
 			pts[i].coord.setX(x_old * cos(b) - y_old * sin(b));
 			pts[i].coord.setY(x_old * sin(b) + y_old * cos(b));
 		}
-
 	}
-	//a += 0.005f;
 }
 
-// Dessiner des côtés à partir des points
-/*void GLWidget::drawLines(vector<Point> points, vector<Side> sides)
-{
-int nbPoints = sides.size();
-if (nbPoints == 0)
-return;
-glColor3f(150.0f, 150.0f, 150.0f);
-glBegin(GL_LINES);
-for (int i = 0; i < nbPoints; i++)
-{
-int indexP1 = getPointIndex(points, sides[i].pLow);
-int indexP2 = getPointIndex(points, sides[i].pHigh);
-glVertex3f(points.at(indexP1).coord.x(), points.at(indexP1).coord.y(), points.at(indexP1).coord.z());
-glVertex3f(points.at(indexP2).coord.x(), points.at(indexP2).coord.y(), points.at(indexP2).coord.z());
+void GLWidget::move3DPoints(vector<QVector3D> &pts) {
+	for (int i = 0; i < pts.size(); i++)
+	{
+		float x_old = pts[i].x(); float y_old = pts[i].y(); float z_old = pts[i].z();
+		if (i % 2 == 0) {
+			pts[i].setX(x_old * cos(a) - y_old * sin(a));
+			pts[i].setY(x_old * sin(a) + y_old * cos(a));
+			//pts[i].setZ(z_old * sin(a) + x_old * cos(a));
+		}
+		else {
+			pts[i].setX(x_old * cos(b) - y_old * sin(b));
+			pts[i].setY(x_old * sin(b) + y_old * cos(b));
+			//pts[i].setZ(z_old * sin(b) + x_old * cos(b));
+		}
+	}
 }
-glEnd();
-}*/
-
