@@ -28,10 +28,9 @@ public:
 	void resizeGL(int width, int height);
 	void paintGL();
 	~GLWidget();
-
-	
-	void changeModeEnvelop(int mode) { modeEnvelop = mode; }
+	void changeModeEnvelop(int mode) { modeEnvelop = mode; needUpdate = true; }
 	void changeModeTriangulation(int mode);
+	QString labelTimer[5];
 
 protected:
 	void mousePressEvent(QMouseEvent *event);
@@ -60,12 +59,13 @@ public slots:
 	void setVoronoi(int f) { showVoronoi = f == 0 ? false : true; }
 	void setMovePoint(int m) { movePoint = m == 0 ? false : true; }
 	void setGrid(int g) { showGrid = g == 0 ? false : true; }
-	void setEnvelop3D(int e) { showEnvelop3D = e == 0 ? false : true; qDebug() << "here"; }
+	void setEnvelop3D(int e) { showEnvelop3D = e == 0 ? false : true; }
 	void resetData();
 	void resetCamera();
 
 signals:
-	void MouseMoved();
+	//void MouseMoved();
+	void labelChanged(int);
 
 private:
 	QPoint mousePos;
@@ -92,6 +92,7 @@ private:
 	unsigned int current_id_faces = 0;
 
 	int pointSelected;
+	bool needUpdate = false;
 
 	int modeEnvelop = 0;
 	int modeTriangulation = 3;

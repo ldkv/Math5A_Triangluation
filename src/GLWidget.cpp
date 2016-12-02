@@ -117,9 +117,6 @@ void GLWidget::resizeGL(int width, int height)
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-
-	//qDebug() << width << " " << height;
-	//qDebug() << -range * m_aspectRatio << " " << range * m_aspectRatio;
 }
 
 void drawConvexHullFromSides();
@@ -147,21 +144,34 @@ void GLWidget::paintGL()
 	switch (modeTriangulation)
 	{
 	case 1:	// Triangulation simple (avec flipping ou non)
-		faces.clear();
-		timer.start();
-		faces = TriangulationSimple(points, _convexHull);
-		time = timer.elapsed();
-		//ui.laTimeTriSimple->setText(QString::number(time) + "");
-		//drawFaces(Flipping2(tgs));
+		if (needUpdate)
+		{
+			faces.clear();
+			timer.start();
+			faces = TriangulationSimple(points, _convexHull);
+			time = timer.nsecsElapsed() / 1000;
+			labelTimer[2] = QString::number(time) + " us";
+			emit labelChanged(2);
+			if (modeEnvelop == 0)
+				needUpdate = false;
+		}
 		drawFaces(faces);
-		//drawLinesFromPoints(Voronoi(points));
-		//drawPoints(Voronoi(points));
-		//drawConvexHullFromSides();
 		break;
 	case 2:	// Flipping
-		faces.clear();
-		faces = TriangulationSimple(points, _convexHull);
-		drawLinesFromSides(Flipping(faces));
+		if (needUpdate)
+		{
+			sides.clear();
+			faces.clear();
+			timer.start();
+			faces = TriangulationSimple(points, _convexHull);
+			sides = Flipping(faces);
+			time = timer.nsecsElapsed() / 1000;
+			labelTimer[3] = QString::number(time) + " us";
+			emit labelChanged(3);
+			if (modeEnvelop == 0)
+				needUpdate = false;
+		}
+		drawLinesFromSides(sides);
 		break;
 	case 3:	// Triangulation Delaunay
 		drawFacesWithID(faces, false);
@@ -183,13 +193,24 @@ void GLWidget::paintGL()
 	}
 
 	// Enveloppe
+	vector<Point> envelop;
 	switch (modeEnvelop)
 	{
 	case 1:	// Enveloppe par méthode marche de Jarvis
-		drawPoly(EnvelopeJarvis(points), QVector3D(150.0f, 150.0f, 150.0f), 3);
+		timer.start();
+		envelop = EnvelopeJarvis(points);
+		time = timer.nsecsElapsed() / 1000;
+		labelTimer[0] = QString::number(time) + " us";
+		emit labelChanged(0);
+		drawPoly(envelop, QVector3D(150.0f, 150.0f, 150.0f), 3);
 		break;
 	case 2:	// Enveloppe par méthode Graham-Scan
-		drawPoly(GrahamScan(points), QVector3D(150.0f, 0, 150.0f), 2);
+		timer.start();
+		envelop = GrahamScan(points);
+		time = timer.nsecsElapsed() / 1000;
+		labelTimer[1] = QString::number(time) + " us";
+		emit labelChanged(1);
+		drawPoly(envelop, QVector3D(150.0f, 0, 150.0f), 2);
 		break;
 	default:
 		break;
@@ -201,8 +222,8 @@ void GLWidget::paintGL()
 		movePoints(points);
 		if (modeTriangulation == 3)
 			recalculateDelaunay(points);
+		needUpdate = true;
 	}
-
 	drawPoints(points, QVector3D(255.0f, 255.0f, 255.0f));
 
 	/*vector<QVector3D > t;
@@ -228,24 +249,39 @@ QVector3D GLWidget::convertXY(int X, int Y)
 void GLWidget::mousePressEvent(QMouseEvent *event)
 {
 	pointSelected = findNearestPoint(event->pos());
+	QElapsedTimer timer;
 	if (event->buttons() & Qt::LeftButton)
 	{
 		if (pointSelected == -1) {  
 			if (modeTriangulation == 3)
+			{
+				timer.start();
 				Delaunay_addPoint(points, sides, faces, convertXY(event->pos().x(), event->pos().y()));
+				int time = timer.nsecsElapsed() / 1000;
+				labelTimer[4] = QString::number(time) + " us";
+				emit labelChanged(4);
+			}
 			else
 				points.push_back(Point(convertXY(event->pos().x(), event->pos().y())));
 			//update();
+			needUpdate = true;
 		}
 	}
 	else if (event->buttons() & Qt::RightButton)
 	{
 		if (pointSelected != -1) {
 			if (modeTriangulation == 3)
+			{
+				timer.start();
 				Delaunay_deletePoint(points, sides, faces, pointSelected);
+				int time = timer.nsecsElapsed() / 1000;
+				labelTimer[4] = QString::number(time) + " us";
+				emit labelChanged(4);
+			}
 			else
 				points.erase(points.begin() + pointSelected);
 			//update();
+			needUpdate = true;
 		}
 	}
 }
@@ -254,20 +290,26 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
 void GLWidget::mouseMoveEvent(QMouseEvent *event)
 {
 	mousePos = event->pos();
-	emit MouseMoved();
+	//emit MouseMoved();
 	if (event->buttons() & Qt::LeftButton)
 	{
 		if (pointSelected >= 0)
 		{
 			if (modeTriangulation == 3)
 			{
+				QElapsedTimer timer;
+				timer.start();
 				Delaunay_deletePoint(points, sides, faces, pointSelected);
 				Delaunay_addPoint(points, sides, faces, convertXY(event->pos().x(), event->pos().y()));
 				pointSelected = points.size() - 1;
+				int time = timer.nsecsElapsed() / 1000;
+				labelTimer[4] = QString::number(time) + " us";
+				emit labelChanged(4);
 			}
 			else
 				points[pointSelected] = Point(convertXY(event->pos().x(), event->pos().y()));
 			//update();
+			needUpdate = true;
 		}
 	}
 
@@ -583,6 +625,7 @@ void GLWidget::changeModeTriangulation(int mode)
 	modeTriangulation = mode;
 	if (mode == 3)
 		recalculateDelaunay(points);
+	needUpdate = true;
 }
 
 void GLWidget::recalculateDelaunay(vector<Point> pts)
@@ -590,6 +633,7 @@ void GLWidget::recalculateDelaunay(vector<Point> pts)
 	resetData();
 	for (int i = 0; i < pts.size(); i++)
 		Delaunay_addPoint(points, sides, faces, pts[i].coord);
+	needUpdate = true;
 }
 
 void GLWidget::resetData() 
@@ -598,6 +642,7 @@ void GLWidget::resetData()
 	sides.clear();
 	faces.clear();
 	resetGlobalID();
+	needUpdate = true;
 }
 
 void GLWidget::resetCamera() {

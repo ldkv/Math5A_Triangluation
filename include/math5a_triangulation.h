@@ -16,6 +16,7 @@ public:
 private slots:
 	void modeEnvelop();
 	void modeTriangulation();
+	void updateLabels(int);
 	void quit();
 
 private:

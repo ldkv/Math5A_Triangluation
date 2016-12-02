@@ -1,8 +1,8 @@
 #include "stdafx.h"
-#include "AlgoMath.h"
 
-#include <algorithm>  
+#include "AlgoMath.h"
 #include <QDebug>
+#include <algorithm>  
 
 
 void resetGlobalID()
@@ -499,8 +499,6 @@ int findPointConvexDelaunay(bool closedPoly, vector<Side> La2, vector<Point> pts
 		QLineF SP(S.coord.x(), S.coord.y(), P.x(), P.y());
 		qreal angle1 = SP.angleTo(SS1) < 180 ? SP.angleTo(SS1) : SS1.angleTo(SP);
 		qreal angle2 = SP.angleTo(SS2) < 180 ? SP.angleTo(SS2) : SS2.angleTo(SP);
-		//qreal angle = SS1.angleTo(SS2);
-		qDebug() << angle1 + angle2;
 		if (angle1 + angle2 >= 180)
 			continue;
 		bool notInside = true;
@@ -715,16 +713,25 @@ bool Collinear(QVector3D v1, QVector3D v2)
 	return (QVector3D::crossProduct(v1, v2) == QVector3D(0, 0, 0));
 }
 
-// BUG: infinite loop if 2 points confondus
 vector<Point> EnvelopeJarvis(vector<Point> pts)
 {
 	vector<Point> poly;
-	int N = pts.size();
-	if (N <= 0)
+	if (pts.size() <= 0)
 		return poly;
+	vector<int> id;
+	for (int i = 0; i < pts.size() - 1; i++)
+		for (int j = i + 1; j < pts.size(); j++)
+			if (pts[j].coord == pts[i].coord)
+			{
+				id.push_back(i);
+				break;
+			}
+	for each (int i in id)
+		pts.erase(pts.begin() + i);
 	
 	QVector3D minPoint = pts[0].coord;
 	int i0 = 0;
+	int N = pts.size();
 	for (int i = 1; i < N; i++)
 	{
 		if (pts[i].coord.x() < minPoint.x() || (pts[i].coord.x() == minPoint.x() && pts[i].coord.y() < minPoint.y()))

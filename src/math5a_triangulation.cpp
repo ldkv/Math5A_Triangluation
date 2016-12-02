@@ -19,6 +19,9 @@ Math5A_Triangulation::Math5A_Triangulation(QWidget *parent)
 	shortcut = new QShortcut(QKeySequence("Ctrl+D"), this);
 	QObject::connect(shortcut, SIGNAL(activated()), glScene, SLOT(resetData()));
 
+	// Signal pour mettre à jour les lablels des Timers
+	connect(glScene, SIGNAL(labelChanged(int)), this, SLOT(updateLabels(int)));
+
 	// Connect signals
 	connect(ui.rbJarvis, SIGNAL(clicked()), this, SLOT(modeEnvelop()));
 	connect(ui.rbGrahamScan, SIGNAL(clicked()), this, SLOT(modeEnvelop()));
@@ -41,6 +44,30 @@ Math5A_Triangulation::Math5A_Triangulation(QWidget *parent)
 Math5A_Triangulation::~Math5A_Triangulation()
 {
 	delete[] glScene;
+}
+
+void Math5A_Triangulation::updateLabels(int label)
+{
+	switch (label)
+	{
+	case 0:
+		ui.laTimeJarvis->setText(glScene->labelTimer[label]);
+		break;
+	case 1:
+		ui.laTimeGraham->setText(glScene->labelTimer[label]);
+		break;
+	case 2:
+		ui.laTimeTriSimple->setText(glScene->labelTimer[label]);
+		break;
+	case 3:
+		ui.laTimeFlipping->setText(glScene->labelTimer[label]);
+		break;
+	case 4:
+		ui.laTimeDelaunay->setText(glScene->labelTimer[label]);
+		break;
+	default:
+		break;
+	}
 }
 
 void Math5A_Triangulation::modeEnvelop() 
