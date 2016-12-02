@@ -44,7 +44,7 @@ protected:
 	void drawGridandAxes();
 	QVector3D convertXY(int X, int Y);
 	// Dessiner des côtés à partir des points
-	void drawPoints(vector<Point> points);
+	void drawPoints(vector<Point> points, QVector3D color);
 	//void drawLines(vector<Point> points, vector<Side> sides);
 	void drawLinesFromSides(vector<Side> sides);
 	void drawLinesFromPoints(vector<Point> pts);
@@ -53,10 +53,12 @@ protected:
 	void drawPoly(vector<Point> pts, QVector3D color, float width);
 	void movePoints(vector<Point> &pts);
 	void move3DPoints(vector<QVector3D> &pts);
+	void recalculateDelaunay(vector<Point> pts);
 
 public slots:
 	void timeOutSlot();
-	void setFlipping(int f) { flipping = f == 0 ? false : true; }
+	void setVoronoi(int f) { showVoronoi = f == 0 ? false : true; }
+	void setMovePoint(int m) { movePoint = m == 0 ? false : true; }
 	void resetData();
 	void resetCamera();
 
@@ -90,8 +92,9 @@ private:
 	int pointSelected;
 
 	int modeEnvelop = 0;
-	int modeTriangulation = 2;
-	bool flipping = false;
+	int modeTriangulation = 3;
+	bool showVoronoi = false;
+	bool movePoint = false;
 };
 
 

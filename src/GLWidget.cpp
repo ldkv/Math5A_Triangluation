@@ -137,44 +137,49 @@ void GLWidget::paintGL()
 	glRotatef(m_theta, 1.0f, 0.0f, 0.0f);
 	glRotatef(m_phi, 0.0f, 0.0f, 1.0f);
 
-	drawGridandAxes();
+	//drawGridandAxes();
 
 	// Triangulation
-	vector<Face> tgs;
-	vector<Point> voronoi;
+	//vector<Face> tgs;
 	switch (modeTriangulation)
 	{
 	case 1:	// Triangulation simple (avec flipping ou non)
-		tgs = TriangulationSimple(points, _convexHull);
+		faces.clear();
+		faces = TriangulationSimple(points, _convexHull);
 		//drawFaces(Fliping2(tgs));
-		drawFaces(tgs);
-		if (flipping)
-		{
-			drawLinesFromSides(Fliping(tgs));
-		}
+		drawFaces(faces);
 		//drawLinesFromPoints(Voronoi(points));
 		//drawPoints(Voronoi(points));
 		//drawConvexHullFromSides();
 		break;
-	case 2:	// Triangulation Delaunay
-		drawFacesWithID(faces, false);
+	case 2:	// Flipping
+		faces.clear();
+		faces = TriangulationSimple(points, _convexHull);
+		drawLinesFromSides(Fliping(faces));
 		break;
-	case 3:	// Diagramme de Voronoi
-		//voronoi = diagramVoronoi(points, sides, faces);
-		voronoi = Voronoi(points);
+	case 3:	// Triangulation Delaunay
 		drawFacesWithID(faces, false);
-		drawLinesFromPoints(voronoi);
-		drawPoints(voronoi);
 		break;
 	default:
 		break;
+	}
+
+	if (showVoronoi)
+	{
+		vector<Point> voronoi;
+		if (modeTriangulation == 3)
+			voronoi = diagramVoronoi(points, sides, faces);
+		else
+			voronoi = Voronoi(points);
+		drawLinesFromPoints(voronoi);
+		drawPoints(voronoi, QVector3D(150.0f, 0, 0));
 	}
 
 	// Enveloppe
 	switch (modeEnvelop)
 	{
 	case 1:	// Enveloppe par méthode marche de Jarvis
-		drawPoly(EnvelopeJarvis(points), QVector3D(150.0f, 150.0f, 150.0f), 6);
+		drawPoly(EnvelopeJarvis(points), QVector3D(150.0f, 150.0f, 150.0f), 3);
 		break;
 	case 2:	// Enveloppe par méthode Graham-Scan
 		drawPoly(GrahamScan(points), QVector3D(150.0f, 0, 150.0f), 2);
@@ -184,15 +189,21 @@ void GLWidget::paintGL()
 	}
 
 	//move3DPoints(pointse);
+	if (movePoint)
+	{
+		movePoints(points);
+		if (modeTriangulation == 3)
+			recalculateDelaunay(points);
+	}
 
-	drawPoints(points);
+	drawPoints(points, QVector3D(255.0f, 255.0f, 255.0f));
 
-	vector<QVector3D > t;
+	/*vector<QVector3D > t;
 	for (size_t i = 0; i < points.size(); i++)
 	{
 		points[i].coord.setZ((i + 1)*2);
 		t.push_back(points[i].coord);
-	}
+	}*/
 	//drawConvexHull(ch.process(t), points);
 
 	//drawConvexHull(ch.process(pointse), pointse);
@@ -213,21 +224,21 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
 	if (event->buttons() & Qt::LeftButton)
 	{
 		if (pointSelected == -1) {  
-			if (modeTriangulation >= 2)
+			if (modeTriangulation == 3)
 				Delaunay_addPoint(points, sides, faces, convertXY(event->pos().x(), event->pos().y()));
 			else
 				points.push_back(Point(convertXY(event->pos().x(), event->pos().y())));
-			update();
+			//update();
 		}
 	}
 	else if (event->buttons() & Qt::RightButton)
 	{
 		if (pointSelected != -1) {
-			if (modeTriangulation >= 2)
+			if (modeTriangulation == 3)
 				Delaunay_deletePoint(points, sides, faces, pointSelected);
 			else
 				points.erase(points.begin() + pointSelected);
-			update();
+			//update();
 		}
 	}
 }
@@ -241,7 +252,7 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 	{
 		if (pointSelected >= 0)
 		{
-			if (modeTriangulation >= 2)
+			if (modeTriangulation == 3)
 			{
 				Delaunay_deletePoint(points, sides, faces, pointSelected);
 				Delaunay_addPoint(points, sides, faces, convertXY(event->pos().x(), event->pos().y()));
@@ -249,7 +260,7 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 			}
 			else
 				points[pointSelected] = Point(convertXY(event->pos().x(), event->pos().y()));
-			update();
+			//update();
 		}
 	}
 
@@ -278,7 +289,7 @@ void GLWidget::mouseReleaseEvent(QMouseEvent *event)
 {
 	if (event->button() == Qt::LeftButton && pointSelected >= 0)
 	{
-		update();
+		//update();
 	}
 }
 
@@ -361,7 +372,7 @@ void GLWidget::drawFacesWithID(vector<Face> faces, bool stipple)
 	int nbFaces = faces.size();
 	if (nbFaces == 0)
 		return;
-	glColor3f(150.0f, 150.0f, 150.0f);
+	glColor3f(0, 255.0f, 0);
 	//glPushAttrib is done to return everything to normal after drawing
 	glPushAttrib(GL_ENABLE_BIT);
 	glLineStipple(2, 0x00FF);
@@ -388,7 +399,7 @@ void GLWidget::drawLinesFromSides(vector<Side> sides)
 	int nbSides = sides.size();
 	if (nbSides == 0)
 		return;
-	glColor3f(0.0f, 0.0f, 150.0f);
+	glColor3f(255.0f, 255.0f, 0.0f);
 	for (int i = 0; i < nbSides; i++)
 	{
 		glBegin(GL_LINES);
@@ -439,12 +450,12 @@ void GLWidget::drawPoly(vector<Point> pts, QVector3D color, float width)
 }
 
 // Dessiner des points
-void GLWidget::drawPoints(vector<Point> points)
+void GLWidget::drawPoints(vector<Point> points, QVector3D color)
 {
 	int nbPoints = points.size();
 	if (nbPoints == 0)
 		return;
-	glColor3f(1, 1, 1);
+	glColor3f(color.x(), color.y(), color.z());
 	glPointSize(POINT_SIZE);
 	glBegin(GL_POINTS);
 	for (int i = 0; i < nbPoints; i++)
@@ -540,22 +551,22 @@ void GLWidget::keyPressEvent(QKeyEvent* e)
 
 	case Qt::Key_Left:
 		m_phi += 2.0f;
-		update();
+		//update();
 		break;
 
 	case Qt::Key_Right:
 		m_phi -= 2.0f;
-		update();
+		//update();
 		break;
 
 	case Qt::Key_Up:
 		m_theta += 2.0f;
-		update();
+		//update();
 		break;
 
 	case Qt::Key_Down:
 		m_theta -= 2.0f;
-		update();
+		//update();
 		break;
 	}
 }
@@ -563,14 +574,17 @@ void GLWidget::keyPressEvent(QKeyEvent* e)
 void GLWidget::changeModeTriangulation(int mode)
 {
 	modeTriangulation = mode;
-	if (mode >= 2)
-	{
-		vector<Point> temp = points;
-		resetData();
-		for (int i = 0; i < temp.size(); i++)
-			Delaunay_addPoint(points, sides, faces, temp[i].coord);
-	}
+	if (mode == 3)
+		recalculateDelaunay(points);
 }
+
+void GLWidget::recalculateDelaunay(vector<Point> pts)
+{
+	resetData();
+	for (int i = 0; i < pts.size(); i++)
+		Delaunay_addPoint(points, sides, faces, pts[i].coord);
+}
+
 void GLWidget::resetData() 
 {
 	points.clear();
