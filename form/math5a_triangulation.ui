@@ -67,7 +67,7 @@
         <item>
          <widget class="QLabel" name="laTimeJarvis">
           <property name="text">
-           <string>ms</string>
+           <string>0 us</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
@@ -84,7 +84,7 @@
         <item>
          <widget class="QLabel" name="laTimeGraham">
           <property name="text">
-           <string>ms</string>
+           <string>0 us</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
@@ -104,7 +104,7 @@
         <item>
          <widget class="QCheckBox" name="cbShowEnvelop3D">
           <property name="text">
-           <string>Surpirse Mathafaka</string>
+           <string>3D</string>
           </property>
          </widget>
         </item>
@@ -127,7 +127,7 @@
         <item>
          <widget class="QLabel" name="laTimeTriSimple">
           <property name="text">
-           <string>ms</string>
+           <string>0 us</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
@@ -144,7 +144,7 @@
         <item>
          <widget class="QLabel" name="laTimeFlipping">
           <property name="text">
-           <string>ms</string>
+           <string>0 us</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
@@ -164,7 +164,7 @@
         <item>
          <widget class="QLabel" name="laTimeDelaunay">
           <property name="text">
-           <string>ms</string>
+           <string>0 us</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
