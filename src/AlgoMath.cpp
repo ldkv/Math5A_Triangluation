@@ -1,7 +1,5 @@
 #include "stdafx.h"
-
 #include "AlgoMath.h"
-#include <QDebug>
 #include <algorithm>  
 
 
@@ -22,6 +20,491 @@ Point getPointfromID(vector<Point> pts, int id)
 	return Point();	// id = -1 => condition pour vérifier si on a bien trouvé id désiré
 }
 
+// ------------------------------------------ Jarvis -------------------------------------------------------------
+vector<Point> EnvelopeJarvis(vector<Point> pts)
+{
+	vector<Point> poly;
+	if (pts.size() <= 0)
+		return poly;
+	vector<int> id;
+	for (int i = 0; i < pts.size() - 1; i++)
+		for (int j = i + 1; j < pts.size(); j++)
+			if (pts[j].coord == pts[i].coord)
+			{
+				id.push_back(i);
+				break;
+			}
+	for each (int i in id)
+		pts.erase(pts.begin() + i);
+	
+	QVector3D minPoint = pts[0].coord;
+	int i0 = 0;
+	int N = pts.size();
+	for (int i = 1; i < N; i++)
+	{
+		if (pts[i].coord.x() < minPoint.x() || (pts[i].coord.x() == minPoint.x() && pts[i].coord.y() < minPoint.y()))
+		{
+			minPoint = pts[i].coord;
+			i0 = i;
+		}
+	}
+
+	QLineF v(0, 0, 0, -1);
+	int i = i0;
+	do
+	{
+		Point Pi = pts[i];
+		poly.push_back(Pi);
+		if (N <= 1)
+			break;
+		// recherche du point suivant
+		// initialisation de angle_min et lmax avec le premier point d'indice différent de i
+		int j = (i == 0) ? 1 : 0;
+		QLineF PiPj(Pi.coord.x(), Pi.coord.y(), pts[j].coord.x(), pts[j].coord.y());
+		qreal angle_min = v.angleTo(PiPj);
+		float lmax = Pi.coord.distanceToPoint(pts[j].coord);
+		int inew = j;
+		// recherche du point le plus proche
+		for (j = inew + 1; j < N; j++)
+		{
+			if (j != i)
+			{
+				PiPj = QLineF(Pi.coord.x(), Pi.coord.y(), pts[j].coord.x(), pts[j].coord.y());
+				qreal angle = v.angleTo(PiPj);
+				float l = Pi.coord.distanceToPoint(pts[j].coord);
+				if (angle_min > angle || (angle_min == angle && lmax < l))
+				{
+					angle_min = angle;
+					lmax = l;
+					inew = j;
+				}
+			}
+		}
+		// mise à jour du pivot et du vecteur directeur
+		v = QLineF(pts[i].coord.x(), pts[i].coord.y(), pts[inew].coord.x(), pts[inew].coord.y());
+		i = inew;
+	} while (i != i0);
+	return poly;	
+}
+
+// --------------------------------------- Graham Scan ----------------------------------------
+Point barycenter(vector<Point> points)
+{
+	Point bary(QVector3D(0, 0, 0));
+	int s = points.size();
+	int sX = 0, sY = 0, sZ = 0;
+
+	for (int i = 0; i < s; i++)
+	{
+		sX += points[i].coord.x();
+		sY += points[i].coord.y();
+		sZ += points[i].coord.z();
+	}
+
+	bary = Point(QVector3D(sX / s, sY / s, sZ / s));
+
+	return bary;
+}
+struct angleSort {
+	angleSort(Point pointsBarycenter) { this->pointsBarycenter = pointsBarycenter; }
+	bool operator () (Point i, Point j) {
+		QLineF lx(pointsBarycenter.coord.x(), pointsBarycenter.coord.y(), 1, 0);
+		QLineF li(pointsBarycenter.coord.x(), pointsBarycenter.coord.y(), i.coord.x(), i.coord.y());
+		QLineF lj(pointsBarycenter.coord.x(), pointsBarycenter.coord.y(), j.coord.x(), j.coord.y());
+		float anglei = lx.angleTo(li);
+		float anglej = lx.angleTo(lj);
+		return anglei == anglej ? i.coord.distanceToPoint(pointsBarycenter.coord) < j.coord.distanceToPoint(pointsBarycenter.coord) : anglei < anglej;
+	}
+	Point pointsBarycenter;
+};
+
+int magnitudeVector(QVector3D v1, QVector3D v2)
+{
+	return sqrt(pow(v2.x() - v1.x(), 2) + pow(v2.y() - v1.y(), 2));
+}
+
+
+int nextIndexPoint(int currentIndex, int vectorSize) {
+	return (currentIndex + 1 >= vectorSize ? currentIndex + 1 - vectorSize : currentIndex + 1);
+}
+int previousIndexPoint(int currentIndex, int vectorSize) {
+	return (currentIndex - 1 < 0 ? currentIndex - 1 + vectorSize : currentIndex - 1);
+}
+
+vector<Point> GrahamScan(vector<Point> pts) {
+	if (pts.size() > 2) {
+		Point bary = barycenter(pts);
+		// Tri des points
+		std::sort(pts.begin(), pts.end(), angleSort(bary));
+
+		vector<Point> L = pts;
+		int Sinit = 0;
+		int pivot = Sinit;
+		bool pass = false;
+		do
+		{
+			// Calcul de nos vecteurs
+			QLineF PiPj(L[pivot].coord.x(), L[pivot].coord.y(), L[nextIndexPoint(pivot, L.size())].coord.x(), L[nextIndexPoint(pivot, L.size())].coord.y());
+			QLineF PiPk(L[pivot].coord.x(), L[pivot].coord.y(), L[previousIndexPoint(pivot, L.size())].coord.x(), L[previousIndexPoint(pivot, L.size())].coord.y());
+			// Si le sommet est convexe
+			if (PiPk.angleTo(PiPj) > 180)
+			{
+				// On passe au point suivant
+				pivot = nextIndexPoint(pivot, L.size());
+				pass = true;
+			}
+			else
+			{
+				// Mise à jour de L
+				L.erase(L.begin() + pivot);
+				Sinit = previousIndexPoint(pivot, L.size());
+				pivot = Sinit;
+				pass = false;
+			}
+		} while (pivot != Sinit || pass == false);
+		return L;
+	}
+	return pts;
+}
+
+//------------------------ Triangulation Simple -----------------------------------------------------------
+bool coordsSort(Point i, Point j) { return (i.coord.x() == j.coord.x() ? i.coord.y() < j.coord.y() : i.coord.x() < j.coord.x()); }
+
+vector<Face> TriangulationSimple(vector<Point> pts, list<Side> &_convexHull) {
+	// 1
+	vector<Side> sides;
+	list<Side> convexHull;
+	vector<Face> faces;
+	vector<Point> colinearPoints;
+	std::sort(pts.begin(), pts.end(), coordsSort);
+	// 2
+	int i = 1;
+	if (pts.size() > 2)
+	{
+		// 2a
+		colinearPoints.push_back(pts[0]);
+		for (i; i < pts.size() - 1; i++)
+		{
+			QVector3D vec1 = pts[0].coord - pts[i].coord;
+			QVector3D vec2 = pts[0].coord - pts[i + 1].coord;
+
+			if (vec1.x() * vec2.y() == vec1.y() * vec2.x())
+			{
+				colinearPoints.push_back(pts[i]);
+			}
+			else
+			{
+				i++;
+				break;
+			}
+		}
+
+		// 2.b) Construction du triangle
+		if (i < pts.size())
+		{
+			if (colinearPoints.size() >= 2)
+			{
+				unsigned int j = 0;
+				convexHull.push_back(Side(pts[0], pts[i]));
+				for (j = 0; j < colinearPoints.size(); j++)
+				{
+					convexHull.push_back(Side(pts[j], pts[j+1]));
+					faces.push_back(Face(pts[j], pts[j+1], pts[i]));
+				}
+				convexHull.push_back(Side(pts[i], pts[j]));
+			}
+			else {
+				faces.push_back(Face(pts[0], pts[1], pts[2]));
+				convexHull.push_back(Side(pts[0], pts[1]));
+				convexHull.push_back(Side(pts[1], pts[2]));
+				convexHull.push_back(Side(pts[2], pts[0]));
+				i = 2;
+			}
+		}
+
+		// 3) Recherche des segments visibles
+		while (++i < pts.size())
+		{
+			Point nextVert = pts[i];
+
+			vector<Side> viewedEdges;
+			viewedEdges = getViewedEdge(i, pts, convexHull);
+
+			// Ajout des nouvelles faces visibles
+			vector<Side>::iterator edgeView;
+			for (edgeView = viewedEdges.begin(); edgeView != viewedEdges.end(); edgeView++)
+			{
+				Point vertA = edgeView->points[0];
+				Point vertB = edgeView->points[1];
+
+				faces.push_back(Face(vertA, nextVert, vertB));
+			}
+		}
+	}
+
+	list<Side>::iterator itE;
+	list<Side>::iterator fromEdge = convexHull.end();
+	list<Side>::iterator toEdge = convexHull.begin();
+
+	_convexHull.clear();
+	for (itE = convexHull.begin(); itE != convexHull.end(); ++itE)
+	{
+		_convexHull.push_back(*itE);
+	}
+
+	return faces;
+}
+
+// Fonction de visibilité
+vector<Side> getViewedEdges(vector<Side> sides, vector<Point> pts, Point P)
+{
+	vector<Side> viewedEdges;
+	// For each Edge in our list of edges
+	for (int i = 0; i < sides.size(); i++)
+	{
+		if (sides[i].fLeft >= 0 && sides[i].fRight >= 0)
+			continue;
+		// Get components the current edge
+		Point A = getPointfromID(pts, sides[i].pLow);
+		Point B = getPointfromID(pts, sides[i].pHigh);
+
+		Point C = pts[0];
+		int o = 0;
+		while ((C.coord == A.coord || C.coord == B.coord) && o + 1 < pts.size()) {
+			C = pts[++o];
+		}
+
+		// Compute face normal formed by those 3 Vertex
+		QVector3D u = B.coord - A.coord;
+		QVector3D v = C.coord - A.coord;
+		QVector3D normal = crossProductNormalized(u, v);
+
+		// check if AB edge is viewed by the vertex C
+		if (isEdgeViewed(P.coord, A.coord, B.coord, normal))
+			viewedEdges.push_back(sides[i]);
+	}
+	return viewedEdges;
+}
+
+vector<Side> getViewedEdge(int nextIdVert, vector<Point> pts, list<Side> &convexHull)
+{
+	vector<Side> viewedEdge;
+
+	list<Side>::iterator itE;
+	list<Side>::iterator fromEdge = convexHull.end();
+	list<Side>::iterator toEdge = convexHull.begin();
+
+	Point nextVert = pts[nextIdVert];
+
+	// Pour tous les points de l'enveloppe convexe
+	for (itE = convexHull.begin(); itE != convexHull.end(); ++itE)
+	{
+		Point A = itE->points[0];
+		Point B = itE->points[1];
+
+		// Recherche du 3ième point du triangle
+		Point C = pts[0];
+		int o = 0;
+		while ((C.coord == A.coord || C.coord == B.coord) && o+1 < pts.size()) {
+			C = pts[++o];
+		}
+
+		// Calcul de la normal au côté
+		QVector3D u = B.coord - A.coord;
+		QVector3D v = C.coord - A.coord;
+		QVector3D normal = crossProductNormalized(u, v);
+
+		QVector3D a = A.coord;
+		QVector3D b = B.coord;
+		QVector3D c = C.coord;
+
+		// Est ce que AB est visible par C
+		if (isEdgeViewed(nextVert.coord, a, b, normal))
+		{
+			viewedEdge.push_back(Side(A, B));
+
+			if (fromEdge == convexHull.end())
+				fromEdge = itE;
+			toEdge = itE;
+		}
+	}
+
+	// Mise à jour de l'enveloppe convexe pour les prochaines itérations
+	if (viewedEdge.size() > 0) {
+		std::vector<Side>::iterator itviewEdg;
+		Point firstVert = viewedEdge.front().points[0];
+		Point lastVert = viewedEdge.back().points[1];
+
+		convexHull.insert(toEdge, Side(firstVert, nextVert));
+		convexHull.insert(toEdge, Side(nextVert, lastVert));
+
+		for (itviewEdg = viewedEdge.begin(); itviewEdg != viewedEdge.end(); itviewEdg++)
+			convexHull.remove(*itviewEdg);
+	}
+	
+	return viewedEdge;
+}
+
+float dot(QVector3D p, QVector3D op) { return p.x()*op.x() + p.y()*op.y() + p.z()*op.z(); } // Produit scalaire de 2 points
+float norme(QVector3D p) { return float(sqrt(p.x()*p.x() + p.y()*p.y() + p.z()*p.z())); } // Norme du point (longueur du vecteur.)
+QVector3D crossProduct(QVector3D p, QVector3D op) { QVector3D t(p.y()*op.z() - p.z()*op.y(), p.z()*p.x() - p.x()*op.z(), p.x()*op.y() - p.y()*op.x()); return t; } //Produit vectoriel de 2 points.
+QVector3D normalize(QVector3D p) { float n = norme(p); return QVector3D(p.x() / n, p.y() / n, p.z() / n);} //Normalisation du point.
+QVector3D crossProductNormalized(QVector3D p, QVector3D op) 
+{ 
+	QVector3D final;
+	final = crossProduct(p, op);
+	final = normalize(final);
+	return final;
+} // Produit vectoriel normalisé de 2 points
+
+bool isEdgeViewed(QVector3D P, QVector3D A, QVector3D B, QVector3D n)
+{
+	// Vecteur intérieur
+	QVector3D u = B - A;
+	QVector3D v = P - A;
+
+	// Normal de ce vecteur
+	QVector3D normalAB = crossProductNormalized(u, n);
+
+	return dot(normalAB, v) > 0 ? true : false;
+}
+
+// --------------------------------- Flipping -----------------------------------------------------------------
+vector<Side> Flipping(vector<Face> faces)
+{
+	vector<Side> result;
+	vector<Side> AcTemp;
+	vector<Side> Ac;
+	for (int i = 0; i < faces.size(); i++)
+	{
+		AcTemp.push_back(Side(faces[i].points[0], faces[i].points[1], i));
+		AcTemp.push_back(Side(faces[i].points[1], faces[i].points[2], i));
+		AcTemp.push_back(Side(faces[i].points[2], faces[i].points[0], i));
+	}
+	vector<int> sideToDestroy;
+	for (int i = 0; i < AcTemp.size(); i++) {
+		for (int j = 0; j < AcTemp.size(); j++) {
+			if ((i != j)) {
+				bool pass = false;
+				for (int h = 0; h < sideToDestroy.size(); h++) {
+					if (sideToDestroy[h] == i) {
+						pass = true;
+					}
+				}
+				if (!pass && ((AcTemp[i].points[0].coord == AcTemp[j].points[0].coord && AcTemp[i].points[1].coord == AcTemp[j].points[1].coord) 
+					|| (AcTemp[i].points[1].coord == AcTemp[j].points[0].coord && AcTemp[i].points[0].coord == AcTemp[j].points[1].coord))) {
+					AcTemp[i].idFace2 = AcTemp[j].idFace1;
+					sideToDestroy.push_back(j);
+				}
+			}
+		}
+	}
+	for (int i = 0; i < AcTemp.size(); i++) {
+		bool pass = false;
+		for (int h = 0; h < sideToDestroy.size(); h++) {
+			if (sideToDestroy[h] == i) {
+				pass = true;
+			}
+		}
+		if(!pass)
+			Ac.push_back(AcTemp[i]);
+	}
+	while (Ac.size()!=0)
+	{
+		Side A = Ac.back();
+		Ac.pop_back();
+		if (A.idFace2 != -1) {
+			QVector3D p1;
+			QVector3D p2;
+			for (int i = 0; i <faces[A.idFace1].points.size(); i++) {
+				if (faces[A.idFace1].points[i].coord != A.points[0].coord && faces[A.idFace1].points[i].coord != A.points[1].coord) {
+					p1 = faces[A.idFace1].points[i].coord;
+					break;
+				}
+			}
+			for (int i = 0; i <faces[A.idFace2].points.size(); i++) {
+				if (faces[A.idFace2].points[i].coord != A.points[0].coord && faces[A.idFace2].points[i].coord != A.points[1].coord) {
+					p2 = faces[A.idFace2].points[i].coord;
+					break;
+				}
+			}
+			if (inCircumCircle(faces[A.idFace1], p2) || inCircumCircle(faces[A.idFace2], p1)) {
+				QVector3D p3;
+				QVector3D p4;
+				for (int i = 0; i <faces[A.idFace1].points.size(); i++) {
+					if (faces[A.idFace1].points[i].coord != p1 && faces[A.idFace1].points[i].coord != p2) {
+						p3 = faces[A.idFace1].points[i].coord;
+						break;
+					}
+				}
+				for (int i = 0; i <faces[A.idFace2].points.size(); i++) {
+					if (faces[A.idFace2].points[i].coord != p1 && faces[A.idFace2].points[i].coord != p2) {
+						p4 = faces[A.idFace2].points[i].coord;
+						break;
+					}
+				}
+				faces[A.idFace1].points[0] = p1;
+				faces[A.idFace1].points[1] = p2;
+				faces[A.idFace1].points[2] = p3;
+				faces[A.idFace2].points[0] = p1;
+				faces[A.idFace2].points[1] = p2;
+				faces[A.idFace2].points[2] = p4;
+				A.points[0] = p1;
+				A.points[1] = p2;
+			}
+		}
+		result.push_back(A);
+	}
+	return result;
+}
+
+bool inCircumCircle(Face f, QVector3D v)
+{
+	float ab = (f.points[0].coord.x() * f.points[0].coord.x()) + (f.points[0].coord.y() * f.points[0].coord.y());
+	float cd = (f.points[1].coord.x() * f.points[1].coord.x()) + (f.points[1].coord.y() * f.points[1].coord.y());
+	float ef = (f.points[2].coord.x() * f.points[2].coord.x()) + (f.points[2].coord.y() * f.points[2].coord.y());
+
+	float circum_x = (ab * (f.points[2].coord.y() - f.points[1].coord.y()) + cd * (f.points[0].coord.y() - f.points[2].coord.y()) + ef * (f.points[1].coord.y() - f.points[0].coord.y())) / (f.points[0].coord.x() * (f.points[2].coord.y() - f.points[1].coord.y()) + f.points[1].coord.x() * (f.points[0].coord.y() - f.points[2].coord.y()) + f.points[2].coord.x() * (f.points[1].coord.y() - f.points[0].coord.y())) / 2.f;
+	float circum_y = (ab * (f.points[2].coord.x() - f.points[1].coord.x()) + cd * (f.points[0].coord.x() - f.points[2].coord.x()) + ef * (f.points[1].coord.x() - f.points[0].coord.x())) / (f.points[0].coord.y() * (f.points[2].coord.x() - f.points[1].coord.x()) + f.points[1].coord.y() * (f.points[0].coord.x() - f.points[2].coord.x()) + f.points[2].coord.y() * (f.points[1].coord.x() - f.points[0].coord.x())) / 2.f;
+	float circum_radius = sqrtf(((f.points[0].coord.x() - circum_x) * (f.points[0].coord.x() - circum_x)) + ((f.points[0].coord.y() - circum_y) * (f.points[0].coord.y() - circum_y)));
+
+	float dist = sqrtf(((v.x() - circum_x) * (v.x() - circum_x)) + ((v.y() - circum_y) * (v.y() - circum_y)));
+	return dist <= circum_radius;
+}
+
+int getSideIDFromPoints(vector<Side> s, Point x, Point y) {
+	for (int i = 0; i < s.size(); i++)
+	{
+		if ((s[i].pLow == x.id && s[i].pHigh == y.id) || (s[i].pHigh == x.id && s[i].pLow == y.id)) {
+			return s[i].id;
+		}
+	}
+	return -1;
+}
+
+int getPointIndex(vector<Point> pts, int id) {
+	for (int i = 0; i < pts.size(); i++)
+	{
+		if (pts[i].id == id) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+//-------------------------- Delaunay --------------------------------------------------------------------------
+bool insideCircumCircle(QVector3D pt, QVector3D v1, QVector3D v2, QVector3D v3)
+{
+	float alpha = (v2 - v3).lengthSquared() * QVector3D::dotProduct(v1 - v2, v1 - v3) / (2 * QVector3D::crossProduct(v1 - v2, v2 - v3).lengthSquared());
+	float beta = (v1 - v3).lengthSquared() * QVector3D::dotProduct(v2 - v1, v2 - v3) / (2 * QVector3D::crossProduct(v1 - v2, v2 - v3).lengthSquared());
+	float theta = (v1 - v2).lengthSquared() * QVector3D::dotProduct(v3 - v1, v3 - v2) / (2 * QVector3D::crossProduct(v1 - v2, v2 - v3).lengthSquared());
+
+	QVector3D center = alpha*v1 + beta*v2 + theta*v3;
+	float radius = (v1 - v2).length()*(v2 - v3).length()*(v3 - v1).length() / (2 * QVector3D::crossProduct(v1 - v2, v2 - v3).length());
+
+	return center.distanceToPoint(pt) <= radius;
+}
+
 Side getSidefromID(vector<Side> sds, int id)
 {
 	for (int i = 0; i < sds.size(); i++)
@@ -40,6 +523,11 @@ Face getFacefromID(vector<Face> faces, int id)
 			return faces[i];
 	}
 	return Face();	// id = -1 => condition pour vérifier si on a bien trouvé id désiré
+}
+
+bool Collinear(QVector3D v1, QVector3D v2)
+{
+	return (QVector3D::crossProduct(v1, v2) == QVector3D(0, 0, 0));
 }
 
 void deleteSidefromID(int id, vector<Side> &sds, vector<Point> &pts)
@@ -103,75 +591,6 @@ void deleteFacefromID(int faceID, vector<Face> &faces, vector<Side> &sides)
 	}
 }
 
-vector<Point> diagramVoronoi(vector<Point> pts, vector<Side> sides, vector<Face> faces)
-{
-	vector<Point> results;
-	float scale = 1000;
-	if (pts.size() <= 1)
-		return results;
-	if (faces.size() == 0)
-	{
-		std::sort(pts.begin(), pts.end(), coordsSort);
-		for (int i = 0; i < pts.size() - 1; i++)
-		{
-			QVector3D AB = pts[i + 1].coord - pts[i].coord;
-			QVector3D M = (pts[i + 1].coord + pts[i].coord) / 2;
-			float y1 = scale, y2 = -y1;
-			float x1 = AB.y() / AB.x()*(M.y() - y1) + M.x();
-			float x2 = AB.y() / AB.x()*(M.y() - y2) + M.x();
-			results.push_back(Point(QVector3D(x1, y1, 0)));
-			results.push_back(Point(QVector3D(x2, y2, 0)));
-		}
-		return results;
-	}
-
-	map<int, QVector3D> Ct;
-	for (int i = 0; i < faces.size(); i++)
-	{
-		vector<Point> v = getVertexesfromFace(faces[i], pts, sides);
-		Ct[faces[i].id] = circumCircleCenter(v[0].coord, v[1].coord, v[2].coord);
-	}
-	
-	for (int i = 0; i < sides.size(); i++)
-	{
-		QVector3D A1, A2;
-		if (sides[i].fLeft != -1)
-			A1 = Ct[sides[i].fLeft];
-		if (sides[i].fRight != -1)
-			A2 = Ct[sides[i].fRight];
-		else
-		{
-			QVector3D S1 = getPointfromID(pts, sides[i].pLow).coord;
-			QVector3D S2 = getPointfromID(pts, sides[i].pHigh).coord;
-			QVector3D S3;
-			Face f = getFacefromID(faces, sides[i].fLeft);
-			for (int j = 0; j < f.sidesID.size(); j++)
-				if (f.sidesID[j] != sides[i].id)
-				{
-					Side a = getSidefromID(sides, f.sidesID[j]);
-					if (a.pHigh != sides[i].pHigh && a.pHigh != sides[i].pLow)
-						S3 = getPointfromID(pts, a.pHigh).coord;
-					else
-						S3 = getPointfromID(pts, a.pLow).coord;
-				}
-			QVector3D n = (S1 + S2) / 2 - A1;
-			if (QVector3D::dotProduct((S3 - S1), n)*QVector3D::dotProduct((A1 - S1), n) < 0)
-				n = -n;
-			float x = A1.x() + n.x() * scale;
-			float y = A1.y() + n.y() * scale;
-			A2 = QVector3D(x, y, 0);
-		}
-		results.push_back(Point(A1));
-		results.push_back(Point(A2));
-	}
-
-	for (int i = 0; i < pts.size(); i++)
-	{
-		 
-	}
-
-	return results;
-}
 
 void Delaunay_addPoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &faces, QVector3D P)
 {
@@ -412,14 +831,14 @@ void Delaunay_deletePoint(vector<Point> &pts, vector<Side> &sides, vector<Face> 
 		deleteFacefromID(f.id, faces, sides);
 	for each (Side s in La1)
 		deleteSidefromID(s.id, sides, pts);
-	
+
 	QVector3D deletedP = pts[deleteID].coord;
 	pts.erase(pts.begin() + deleteID);
 	int N = La2.size();
 	Point S1, S2;
 	int foundVertex;
 	// B.2.1) La2 forme un polygone fermé
-	if (N > 2 && mutualPoint(La2[0], La2[N-1]) >= 0)
+	if (N > 2 && mutualPoint(La2[0], La2[N - 1]) >= 0)
 	{
 		while (N > 3)
 		{
@@ -548,7 +967,7 @@ vector<Face> getIncidentFacesOriented(vector<Side> La1, vector<Face> faces, vect
 			{
 				if (faces[j].sidesID[k] == La1[i].id)
 					foundS1 = k;
-				if (faces[j].sidesID[k] == La1[i+1].id)
+				if (faces[j].sidesID[k] == La1[i + 1].id)
 					foundS2 = k;
 			}
 			if (foundS1 != -1 && foundS2 != -1)
@@ -597,9 +1016,9 @@ vector<Side> getIncidentEdgesOriented(Point P, vector<Side> sides, vector<Point>
 	Point Q = getPointfromID(pts, a.pHigh == P.id ? a.pLow : a.pHigh);
 	QLineF v(P.coord.x(), P.coord.y(), Q.coord.x(), Q.coord.y());
 	vector<qreal> angles;
-	angles.push_back(0); 
+	angles.push_back(0);
 	edges.push_back(a);
-	
+
 	for (int i = 1; i < P.sides.size(); i++)
 	{
 		a = getSidefromID(sides, P.sides[i]);
@@ -670,6 +1089,7 @@ bool insideTriangle(QVector3D pt, QVector3D v1, QVector3D v2, QVector3D v3)
 	return ((b1 == b2) && (b2 == b3));
 }
 
+//-------------------------------- Voronoi v1 -----------------------------------------------------------------------------
 QVector3D circumCircleCenter(QVector3D v1, QVector3D v2, QVector3D v3)
 {
 	float alpha = (v2 - v3).lengthSquared() * QVector3D::dotProduct(v1 - v2, v1 - v3) / (2 * QVector3D::crossProduct(v1 - v2, v2 - v3).lengthSquared());
@@ -679,536 +1099,6 @@ QVector3D circumCircleCenter(QVector3D v1, QVector3D v2, QVector3D v3)
 	return alpha*v1 + beta*v2 + theta*v3;
 }
 
-bool insideCircumCircle(QVector3D pt, QVector3D v1, QVector3D v2, QVector3D v3)
-{
-	float alpha = (v2 - v3).lengthSquared() * QVector3D::dotProduct(v1 - v2, v1 - v3) / (2 * QVector3D::crossProduct(v1 - v2, v2 - v3).lengthSquared());
-	float beta = (v1 - v3).lengthSquared() * QVector3D::dotProduct(v2 - v1, v2 - v3) / (2 * QVector3D::crossProduct(v1 - v2, v2 - v3).lengthSquared());
-	float theta = (v1 - v2).lengthSquared() * QVector3D::dotProduct(v3 - v1, v3 - v2) / (2 * QVector3D::crossProduct(v1 - v2, v2 - v3).lengthSquared());
-
-	QVector3D center = alpha*v1 + beta*v2 + theta*v3;
-	float radius = (v1 - v2).length()*(v2 - v3).length()*(v3 - v1).length() / (2 * QVector3D::crossProduct(v1 - v2, v2 - v3).length());
-
-	return center.distanceToPoint(pt) <= radius;
-}
-
-bool isVisible(Side side, Point point)
-{
-	bool result;
-	QVector3D temp;
-	QVector3D normal = crossProductNormalized(side.points[0].coord, side.points[1].coord);
-	QVector3D newVector(point.coord.x() - side.points[0].coord.x(), point.coord.y() - side.points[0].coord.y(), point.coord.z() - side.points[0].coord.z());
-	float value = temp.dotProduct(normal, newVector);
-	if (value < 0) {
-		result = true;
-	}
-	else
-	{
-		result = false;
-	}
-	return result;
-}
-
-bool Collinear(QVector3D v1, QVector3D v2)
-{
-	return (QVector3D::crossProduct(v1, v2) == QVector3D(0, 0, 0));
-}
-
-vector<Point> EnvelopeJarvis(vector<Point> pts)
-{
-	vector<Point> poly;
-	if (pts.size() <= 0)
-		return poly;
-	vector<int> id;
-	for (int i = 0; i < pts.size() - 1; i++)
-		for (int j = i + 1; j < pts.size(); j++)
-			if (pts[j].coord == pts[i].coord)
-			{
-				id.push_back(i);
-				break;
-			}
-	for each (int i in id)
-		pts.erase(pts.begin() + i);
-	
-	QVector3D minPoint = pts[0].coord;
-	int i0 = 0;
-	int N = pts.size();
-	for (int i = 1; i < N; i++)
-	{
-		if (pts[i].coord.x() < minPoint.x() || (pts[i].coord.x() == minPoint.x() && pts[i].coord.y() < minPoint.y()))
-		{
-			minPoint = pts[i].coord;
-			i0 = i;
-		}
-	}
-
-	QLineF v(0, 0, 0, -1);
-	int i = i0;
-	do
-	{
-		Point Pi = pts[i];
-		poly.push_back(Pi);
-		if (N <= 1)
-			break;
-		// recherche du point suivant
-		// initialisation de angle_min et lmax avec le premier point d'indice différent de i
-		int j = (i == 0) ? 1 : 0;
-		QLineF PiPj(Pi.coord.x(), Pi.coord.y(), pts[j].coord.x(), pts[j].coord.y());
-		qreal angle_min = v.angleTo(PiPj);
-		float lmax = Pi.coord.distanceToPoint(pts[j].coord);
-		int inew = j;
-		// recherche du point le plus proche
-		for (j = inew + 1; j < N; j++)
-		{
-			if (j != i)
-			{
-				PiPj = QLineF(Pi.coord.x(), Pi.coord.y(), pts[j].coord.x(), pts[j].coord.y());
-				qreal angle = v.angleTo(PiPj);
-				float l = Pi.coord.distanceToPoint(pts[j].coord);
-				if (angle_min > angle || (angle_min == angle && lmax < l))
-				{
-					angle_min = angle;
-					lmax = l;
-					inew = j;
-				}
-			}
-		}
-		// mise à jour du pivot et du vecteur directeur
-		v = QLineF(pts[i].coord.x(), pts[i].coord.y(), pts[inew].coord.x(), pts[inew].coord.y());
-		i = inew;
-	} while (i != i0);
-	return poly;	
-}
-
-bool coordsSort(Point i, Point j) { return (i.coord.x()==j.coord.x() ? i.coord.y() < j.coord.y() : i.coord.x() < j.coord.x()); }
-
-/*QVector3D calculVector(Point p1, Point p2)
-{
-	int x = p2.coord.x() - p1.coord.x();
-	int y = p2.coord.y() - p1.coord.y();
-	int z = p2.coord.z() - p1.coord.z();
-	return QVector3D(x, y, z);
-}*/
-
-///-----------------------------------------------------------------------------------
-vector<Face> TriangulationSimple(vector<Point> pts, list<Side> &_convexHull) {
-	// 1
-	vector<Side> sides;
-	list<Side> convexHull;
-	vector<Face> faces;
-	vector<Point> colinearPoints;
-	std::sort(pts.begin(), pts.end(), coordsSort);
-	// 2
-	int i = 1;
-	if (pts.size() > 2)
-	{
-		// 2a
-		colinearPoints.push_back(pts[0]);
-		for (i; i < pts.size() - 1; i++)
-		{
-			//QVector3D vec1 = calculVector(pts[i], pts[i + 1]);
-			QVector3D vec1 = pts[0].coord - pts[i].coord;
-			QVector3D vec2 = pts[0].coord - pts[i + 1].coord;
-
-			if (vec1.x() * vec2.y() == vec1.y() * vec2.x())
-			{
-				colinearPoints.push_back(pts[i]);
-			}
-			else
-			{
-				i++;
-				break;
-			}
-		}
-
-		// 2.b) Construction of the root Triangulation
-		if (i < pts.size())
-		{
-			if (colinearPoints.size() >= 2)
-			{
-				unsigned int j = 0;
-				/*for (j = 1; j < colinearPoints.size()+1; j++)
-				{
-					convexHull.push_back(Side(pts[j], pts[j - 1]));
-					convexHull.push_back(Side(pts[j - 1], pts[i]));
-					faces.push_back(Face(pts[j], pts[j - 1], pts[i]));
-				}
-				convexHull.push_back(Side(pts[i], pts[j - 1]));*/
-				convexHull.push_back(Side(pts[0], pts[i]));
-				for (j = 0; j < colinearPoints.size(); j++)
-				{
-					convexHull.push_back(Side(pts[j], pts[j+1]));
-					//convexHull.push_back(Side(pts[j+1], pts[j+2]));
-					faces.push_back(Face(pts[j], pts[j+1], pts[i]));
-				}
-				convexHull.push_back(Side(pts[i], pts[j])); // Pas (j,i) !
-			}
-			else {
-				faces.push_back(Face(pts[0], pts[1], pts[2]));
-				convexHull.push_back(Side(pts[0], pts[1]));
-				convexHull.push_back(Side(pts[1], pts[2]));
-				convexHull.push_back(Side(pts[2], pts[0]));
-				i = 2;
-			}
-		}
-
-		// 3) Search for all edges viewed by Pi to build the next Triangulation
-		while (++i < pts.size())
-		{
-			Point nextVert = pts[i];
-
-			vector<Side> viewedEdges;
-			viewedEdges = getViewedEdge(i, pts, convexHull);
-
-			// Add a new face with the each viewed edge
-			vector<Side>::iterator edgeView;
-			for (edgeView = viewedEdges.begin(); edgeView != viewedEdges.end(); edgeView++)
-			{
-				//int idVertA = edgeView->points[0];
-				//int idVertB = edgeView->points[1];
-				Point vertA = edgeView->points[0];
-				Point vertB = edgeView->points[1];
-
-				faces.push_back(Face(vertA, nextVert, vertB));
-			}
-		}
-	}
-
-	list<Side>::iterator itE;
-	list<Side>::iterator fromEdge = convexHull.end();
-	list<Side>::iterator toEdge = convexHull.begin();
-
-	_convexHull.clear();
-	for (itE = convexHull.begin(); itE != convexHull.end(); ++itE)
-	{
-		_convexHull.push_back(*itE);
-	}
-
-	return faces;
-}
-
-// Return an array of all the edge "viewed" by the given Vertex
-vector<Side> getViewedEdges(vector<Side> sides, vector<Point> pts, Point P)
-{
-	vector<Side> viewedEdges;
-	// For each Edge in our list of edges
-	for (int i = 0; i < sides.size(); i++)
-	{
-		if (sides[i].fLeft >= 0 && sides[i].fRight >= 0)
-			continue;
-		// Get components the current edge
-		Point A = getPointfromID(pts, sides[i].pLow);
-		Point B = getPointfromID(pts, sides[i].pHigh);
-
-		Point C = pts[0];
-		int o = 0;
-		while ((C.coord == A.coord || C.coord == B.coord) && o + 1 < pts.size()) {
-			C = pts[++o];
-		}
-
-		// Compute face normal formed by those 3 Vertex
-		QVector3D u = B.coord - A.coord;
-		QVector3D v = C.coord - A.coord;
-		QVector3D normal = crossProductNormalized(u, v);
-
-		// check if AB edge is viewed by the vertex C
-		if (isEdgeViewed(P.coord, A.coord, B.coord, normal))
-			viewedEdges.push_back(sides[i]);
-	}
-	return viewedEdges;
-}
-
-
-vector<Side> getViewedEdge(int nextIdVert, vector<Point> pts, list<Side> &convexHull)
-{
-	vector<Side> viewedEdge;
-
-	list<Side>::iterator itE;
-	list<Side>::iterator fromEdge = convexHull.end();
-	list<Side>::iterator toEdge = convexHull.begin();
-
-	Point nextVert = pts[nextIdVert];
-
-	// For each Edge in our convex hull
-	for (itE = convexHull.begin(); itE != convexHull.end(); ++itE)
-	{
-		// Get components the current edge
-		Point A = itE->points[0];
-		Point B = itE->points[1];
-
-		// Get any Vertex in our convex Hull different from A or B
-		// Cstart = convexHull.begin();
-		// std::advance(Cstart, ++o);
-		Point C = pts[0];
-		int o = 0;
-		while ((C.coord == A.coord || C.coord == B.coord) && o+1 < pts.size()) {
-			C = pts[++o];
-		}
-
-		// Compute face normal formed by those 3 Vertex
-		QVector3D u = B.coord - A.coord;
-		QVector3D v = C.coord - A.coord;
-		QVector3D normal = crossProductNormalized(u, v);
-		//QVector3D normal ( 0.f, 0.f, 1.f);
-
-		// Get the real Position for the 3 vertex
-		QVector3D a = A.coord;
-		QVector3D b = B.coord;
-		QVector3D c = C.coord;
-
-		// check if AB edge is viewed by the vertex C
-		if (isEdgeViewed(nextVert.coord, a, b, normal))
-		{
-			viewedEdge.push_back(Side(A, B));
-
-			// save position of the first viewed edge.
-			if (fromEdge == convexHull.end())
-				fromEdge = itE;
-			// and store the last one as well
-			toEdge = itE;
-		}
-	}
-
-	if (viewedEdge.size() > 0) {
-		std::vector<Side>::iterator itviewEdg;
-		Point firstVert = viewedEdge.front().points[0];
-		Point lastVert = viewedEdge.back().points[1];
-
-		convexHull.insert(toEdge, Side(firstVert, nextVert));
-		convexHull.insert(toEdge, Side(nextVert, lastVert));
-
-		for (itviewEdg = viewedEdge.begin(); itviewEdg != viewedEdge.end(); itviewEdg++)
-			convexHull.remove(*itviewEdg);
-	}
-	
-	return viewedEdge;
-}
-
-
-float dot(QVector3D p, QVector3D op) { return p.x()*op.x() + p.y()*op.y() + p.z()*op.z(); } // Produit scalaire de 2 points
-float norme(QVector3D p) { return float(sqrt(p.x()*p.x() + p.y()*p.y() + p.z()*p.z())); } // Norme du point (longueur du vecteur.)
-//T distance(const Point<T>& p) { return sqrt(pow(p.x - x, 2) + pow(p.y - y, 2) + pow(p.z - z, 2)); } // Distance avec le vecteur en paramètre
-//T angle(Point<T> p) { return acos(static_cast<T>(dot(p) / (norme() * p.norme()))); } // Return l'angle non orienté formé par les 2 vecteurs.
-QVector3D crossProduct(QVector3D p, QVector3D op) { QVector3D t(p.y()*op.z() - p.z()*op.y(), p.z()*p.x() - p.x()*op.z(), p.x()*op.y() - p.y()*op.x()); return t; } //Produit vectoriel de 2 points.
-QVector3D normalize(QVector3D p) { float n = norme(p); return QVector3D(p.x() / n, p.y() / n, p.z() / n);} //Normalisation du point.
-QVector3D crossProductNormalized(QVector3D p, QVector3D op) 
-{ 
-	QVector3D final;
-	final = crossProduct(p, op);
-	final = normalize(final);
-	return final;
-} // Produit vectoriel normalisé de 2 points.
-
-bool isEdgeViewed(QVector3D P, QVector3D A, QVector3D B, QVector3D n)
-{
-	QVector3D u = B - A; // Build a vector interior to AB
-	QVector3D v = P - A;
-
-	// Compute the normal interior to the Edge AB
-	QVector3D normalAB = crossProductNormalized(u, n);
-
-	return dot(normalAB, v) > 0 ? true : false;
-}
-
-///-----------------------------------------------------------------------------------
-vector<Side> Flipping(vector<Face> faces)
-{
-	vector<Side> result;
-	vector<Side> AcTemp;
-	vector<Side> Ac;
-	for (int i = 0; i < faces.size(); i++)
-	{
-		AcTemp.push_back(Side(faces[i].points[0], faces[i].points[1], i));
-		AcTemp.push_back(Side(faces[i].points[1], faces[i].points[2], i));
-		AcTemp.push_back(Side(faces[i].points[2], faces[i].points[0], i));
-	}
-	vector<int> sideToDestroy;
-	for (int i = 0; i < AcTemp.size(); i++) {
-		for (int j = 0; j < AcTemp.size(); j++) {
-			if ((i != j)) {
-				bool pass = false;
-				for (int h = 0; h < sideToDestroy.size(); h++) {
-					if (sideToDestroy[h] == i) {
-						pass = true;
-					}
-				}
-				if (!pass && ((AcTemp[i].points[0].coord == AcTemp[j].points[0].coord && AcTemp[i].points[1].coord == AcTemp[j].points[1].coord) 
-					|| (AcTemp[i].points[1].coord == AcTemp[j].points[0].coord && AcTemp[i].points[0].coord == AcTemp[j].points[1].coord))) {
-					AcTemp[i].idFace2 = AcTemp[j].idFace1;
-					sideToDestroy.push_back(j);
-				}
-			}
-		}
-	}
-	for (int i = 0; i < AcTemp.size(); i++) {
-		bool pass = false;
-		for (int h = 0; h < sideToDestroy.size(); h++) {
-			if (sideToDestroy[h] == i) {
-				pass = true;
-			}
-		}
-		if(!pass)
-			Ac.push_back(AcTemp[i]);
-	}
-	while (Ac.size()!=0)
-	{
-		Side A = Ac.back();
-		Ac.pop_back();
-		if (A.idFace2 != -1) {
-			QVector3D p1;
-			QVector3D p2;
-			for (int i = 0; i <faces[A.idFace1].points.size(); i++) {
-				if (faces[A.idFace1].points[i].coord != A.points[0].coord && faces[A.idFace1].points[i].coord != A.points[1].coord) {
-					p1 = faces[A.idFace1].points[i].coord;
-					break;
-				}
-			}
-			for (int i = 0; i <faces[A.idFace2].points.size(); i++) {
-				if (faces[A.idFace2].points[i].coord != A.points[0].coord && faces[A.idFace2].points[i].coord != A.points[1].coord) {
-					p2 = faces[A.idFace2].points[i].coord;
-					break;
-				}
-			}
-			if (inCircumCircle(faces[A.idFace1], p2) || inCircumCircle(faces[A.idFace2], p1)) {
-				QVector3D p3;
-				QVector3D p4;
-				for (int i = 0; i <faces[A.idFace1].points.size(); i++) {
-					if (faces[A.idFace1].points[i].coord != p1 && faces[A.idFace1].points[i].coord != p2) {
-						p3 = faces[A.idFace1].points[i].coord;
-						break;
-					}
-				}
-				for (int i = 0; i <faces[A.idFace2].points.size(); i++) {
-					if (faces[A.idFace2].points[i].coord != p1 && faces[A.idFace2].points[i].coord != p2) {
-						p4 = faces[A.idFace2].points[i].coord;
-						break;
-					}
-				}
-				faces[A.idFace1].points[0] = p1;
-				faces[A.idFace1].points[1] = p2;
-				faces[A.idFace1].points[2] = p3;
-				faces[A.idFace2].points[0] = p1;
-				faces[A.idFace2].points[1] = p2;
-				faces[A.idFace2].points[2] = p4;
-				A.points[0] = p1;
-				A.points[1] = p2;
-			}
-		}
-		result.push_back(A);
-	}
-	return result;
-}
-
-bool inCircumCircle(Face f, QVector3D v)
-{
-	float ab = (f.points[0].coord.x() * f.points[0].coord.x()) + (f.points[0].coord.y() * f.points[0].coord.y());
-	float cd = (f.points[1].coord.x() * f.points[1].coord.x()) + (f.points[1].coord.y() * f.points[1].coord.y());
-	float ef = (f.points[2].coord.x() * f.points[2].coord.x()) + (f.points[2].coord.y() * f.points[2].coord.y());
-
-	float circum_x = (ab * (f.points[2].coord.y() - f.points[1].coord.y()) + cd * (f.points[0].coord.y() - f.points[2].coord.y()) + ef * (f.points[1].coord.y() - f.points[0].coord.y())) / (f.points[0].coord.x() * (f.points[2].coord.y() - f.points[1].coord.y()) + f.points[1].coord.x() * (f.points[0].coord.y() - f.points[2].coord.y()) + f.points[2].coord.x() * (f.points[1].coord.y() - f.points[0].coord.y())) / 2.f;
-	float circum_y = (ab * (f.points[2].coord.x() - f.points[1].coord.x()) + cd * (f.points[0].coord.x() - f.points[2].coord.x()) + ef * (f.points[1].coord.x() - f.points[0].coord.x())) / (f.points[0].coord.y() * (f.points[2].coord.x() - f.points[1].coord.x()) + f.points[1].coord.y() * (f.points[0].coord.x() - f.points[2].coord.x()) + f.points[2].coord.y() * (f.points[1].coord.x() - f.points[0].coord.x())) / 2.f;
-	float circum_radius = sqrtf(((f.points[0].coord.x() - circum_x) * (f.points[0].coord.x() - circum_x)) + ((f.points[0].coord.y() - circum_y) * (f.points[0].coord.y() - circum_y)));
-
-	float dist = sqrtf(((v.x() - circum_x) * (v.x() - circum_x)) + ((v.y() - circum_y) * (v.y() - circum_y)));
-	return dist <= circum_radius;
-}
-
-int getSideIDFromPoints(vector<Side> s, Point x, Point y) {
-	for (int i = 0; i < s.size(); i++)
-	{
-		if ((s[i].pLow == x.id && s[i].pHigh == y.id) || (s[i].pHigh == x.id && s[i].pLow == y.id)) {
-			return s[i].id;
-		}
-	}
-	return -1;
-}
-
-int getPointIndex(vector<Point> pts, int id) {
-	for (int i = 0; i < pts.size(); i++)
-	{
-		if (pts[i].id == id) {
-			return i;
-		}
-	}
-	return -1;
-}
-
-Point barycenter(vector<Point> points)
-{
-	Point bary(QVector3D(0,0,0));
-	int s = points.size();
-	int sX=0, sY=0, sZ=0;
-
-	for (int i = 0; i < s; i++)
-	{
-		sX += points[i].coord.x();
-		sY += points[i].coord.y();
-		sZ += points[i].coord.z();
-	}
-
-	bary = Point(QVector3D(sX/s, sY/s, sZ/s));
-
-	return bary;
-}
-struct angleSort {
-	angleSort(Point pointsBarycenter) { this->pointsBarycenter = pointsBarycenter; }
-	bool operator () (Point i, Point j) {
-		QLineF lx(pointsBarycenter.coord.x(), pointsBarycenter.coord.y(), 1, 0);
-		QLineF li(pointsBarycenter.coord.x(), pointsBarycenter.coord.y(), i.coord.x(), i.coord.y());
-		QLineF lj(pointsBarycenter.coord.x(), pointsBarycenter.coord.y(), j.coord.x(), j.coord.y());
-		float anglei = lx.angleTo(li);
-		float anglej = lx.angleTo(lj);
-		return anglei ==  anglej ? i.coord.distanceToPoint(pointsBarycenter.coord) < j.coord.distanceToPoint(pointsBarycenter.coord) : anglei < anglej;
-	}
-	Point pointsBarycenter;
-};
-
-int magnitudeVector(QVector3D v1, QVector3D v2)
-{
-	return sqrt(pow(v2.x() - v1.x(), 2)+ pow(v2.y() - v1.y(), 2));
-}
-
-
-int nextIndexPoint(int currentIndex, int vectorSize) {
-	return (currentIndex+1 >= vectorSize ?  currentIndex+1 - vectorSize : currentIndex+1);
-}
-int previousIndexPoint(int currentIndex, int vectorSize) {
-	return (currentIndex-1 < 0 ? currentIndex-1 + vectorSize : currentIndex-1);
-}
-
-vector<Point> GrahamScan(vector<Point> pts) {
-	if (pts.size() > 2) {
-		Point bary = barycenter(pts);
-		std::sort(pts.begin(), pts.end(), angleSort(bary));
-
-		vector<Point> L = pts;
-		//Point Sinit = L.at(0);
-		//Point pivot = Sinit;
-		int Sinit = 0;
-		int pivot = Sinit;
-		bool pass = false;
-		do
-		{
-			QLineF PiPj(L[pivot].coord.x(), L[pivot].coord.y(), L[nextIndexPoint(pivot, L.size())].coord.x(), L[nextIndexPoint(pivot, L.size())].coord.y());
-			QLineF PiPk(L[pivot].coord.x(), L[pivot].coord.y(), L[previousIndexPoint(pivot, L.size())].coord.x(), L[previousIndexPoint(pivot, L.size())].coord.y());
-			if (PiPk.angleTo(PiPj) > 180 )
-			{
-				pivot = nextIndexPoint(pivot, L.size());
-				pass = true;
-			}
-			else
-			{
-				L.erase(L.begin() + pivot);
-				Sinit = previousIndexPoint(pivot, L.size());
-				pivot = Sinit;
-				pass = false;
-			}
-		} while (pivot != Sinit || pass == false);
-		return L;
-	}
-	return pts;
-}
-
-///-----------------------------------------------------------------------------------
 vector<Point> Voronoi(vector<Point> pts)
 {
 	vector<Face> tgs;
@@ -1223,9 +1113,7 @@ vector<Point> Voronoi(vector<Point> pts)
 
 	for (int i = 0; i < triangles.size(); i++)
 	{
-		//centers.push_back(CircumCircleCenter(fp2[i]));
 		QVector3D ccc = CircumCircleCenter(triangles[i]);
-		//result.push_back(Point(ccc));
 
 		for (int j = 0; j < sides.size(); j++)
 		{
@@ -1252,11 +1140,6 @@ vector<Point> Voronoi(vector<Point> pts)
 						}
 					}
 
-					/*QVector3D u = B.coord - A.coord;
-					QVector3D v = C.coord - A.coord;
-					QVector3D normal = crossProductNormalized(u, v);
-					normal = crossProduct(u, v);*/
-
 					QVector3D AB = B.coord - A.coord;
 					QVector3D AC = C.coord - A.coord;
 					QVector3D N = QVector3D(AB.y(), -AB.x(), 0);
@@ -1265,12 +1148,7 @@ vector<Point> Voronoi(vector<Point> pts)
 						N = -N;
 
 					result.push_back(Point(ccc));
-					//QVector3D cc = (A.coord + B.coord) / 2;
-					//QVector3D x = QVector3D(cc.x() - ccc.x(), cc.y() - ccc.y(), cc.z() - ccc.z());
-					//result.push_back(Point(ccc+x*200));
-					result.push_back(Point(ccc + N*10));
-					//result.push_back(Point(ccc + normal*200));
-					//result.push_back(Point(ccc));
+					result.push_back(Point(ccc + N * 10));
 				}
 				// Si on est sur un coté adjacent
 				else {
@@ -1287,8 +1165,6 @@ vector<Point> Voronoi(vector<Point> pts)
 				}
 			}
 		}
-
-		//result.push_back(Point(ccc));
 	}
 	return result;
 }
@@ -1396,4 +1272,70 @@ QVector3D CircumCircleCenter(Face f)
 	float circum_x = (ab * (f.points[2].coord.y() - f.points[1].coord.y()) + cd * (f.points[0].coord.y() - f.points[2].coord.y()) + ef * (f.points[1].coord.y() - f.points[0].coord.y())) / (f.points[0].coord.x() * (f.points[2].coord.y() - f.points[1].coord.y()) + f.points[1].coord.x() * (f.points[0].coord.y() - f.points[2].coord.y()) + f.points[2].coord.x() * (f.points[1].coord.y() - f.points[0].coord.y())) / 2.f;
 	float circum_y = (ab * (f.points[2].coord.x() - f.points[1].coord.x()) + cd * (f.points[0].coord.x() - f.points[2].coord.x()) + ef * (f.points[1].coord.x() - f.points[0].coord.x())) / (f.points[0].coord.y() * (f.points[2].coord.x() - f.points[1].coord.x()) + f.points[1].coord.y() * (f.points[0].coord.x() - f.points[2].coord.x()) + f.points[2].coord.y() * (f.points[1].coord.x() - f.points[0].coord.x())) / 2.f;
 	return QVector3D(circum_x, circum_y, 0);
+}
+
+//----------------------------- Voronoi V2 -------------------------------------------------------------
+vector<Point> diagramVoronoi(vector<Point> pts, vector<Side> sides, vector<Face> faces)
+{
+	vector<Point> results;
+	float scale = 1000;
+	if (pts.size() <= 1)
+		return results;
+	if (faces.size() == 0)
+	{
+		std::sort(pts.begin(), pts.end(), coordsSort);
+		for (int i = 0; i < pts.size() - 1; i++)
+		{
+			QVector3D AB = pts[i + 1].coord - pts[i].coord;
+			QVector3D M = (pts[i + 1].coord + pts[i].coord) / 2;
+			float y1 = scale, y2 = -y1;
+			float x1 = AB.y() / AB.x()*(M.y() - y1) + M.x();
+			float x2 = AB.y() / AB.x()*(M.y() - y2) + M.x();
+			results.push_back(Point(QVector3D(x1, y1, 0)));
+			results.push_back(Point(QVector3D(x2, y2, 0)));
+		}
+		return results;
+	}
+
+	map<int, QVector3D> Ct;
+	for (int i = 0; i < faces.size(); i++)
+	{
+		vector<Point> v = getVertexesfromFace(faces[i], pts, sides);
+		Ct[faces[i].id] = circumCircleCenter(v[0].coord, v[1].coord, v[2].coord);
+	}
+
+	for (int i = 0; i < sides.size(); i++)
+	{
+		QVector3D A1, A2;
+		if (sides[i].fLeft != -1)
+			A1 = Ct[sides[i].fLeft];
+		if (sides[i].fRight != -1)
+			A2 = Ct[sides[i].fRight];
+		else
+		{
+			QVector3D S1 = getPointfromID(pts, sides[i].pLow).coord;
+			QVector3D S2 = getPointfromID(pts, sides[i].pHigh).coord;
+			QVector3D S3;
+			Face f = getFacefromID(faces, sides[i].fLeft);
+			for (int j = 0; j < f.sidesID.size(); j++)
+				if (f.sidesID[j] != sides[i].id)
+				{
+					Side a = getSidefromID(sides, f.sidesID[j]);
+					if (a.pHigh != sides[i].pHigh && a.pHigh != sides[i].pLow)
+						S3 = getPointfromID(pts, a.pHigh).coord;
+					else
+						S3 = getPointfromID(pts, a.pLow).coord;
+				}
+			QVector3D n = (S1 + S2) / 2 - A1;
+			if (QVector3D::dotProduct((S3 - S1), n)*QVector3D::dotProduct((A1 - S1), n) < 0)
+				n = -n;
+			float x = A1.x() + n.x() * scale;
+			float y = A1.y() + n.y() * scale;
+			A2 = QVector3D(x, y, 0);
+		}
+		results.push_back(Point(A1));
+		results.push_back(Point(A2));
+	}
+
+	return results;
 }

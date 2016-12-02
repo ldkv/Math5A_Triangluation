@@ -50,7 +50,7 @@ void reset()
 	pointse.push_back(QVector3D(50, 50, -50));
 	pointse.push_back(QVector3D(0, 0, 0));*/
 
-	indices = ch.process(pointse);
+	indices = ch.calculate(pointse);
 }
 
 // Initialisation de la scène OpenGL
@@ -231,7 +231,7 @@ void GLWidget::paintGL()
 			{
 				move3DPoints(pointse);
 			}
-			drawConvexHull(ch.process(pointse), pointse);
+			drawConvexHull(ch.calculate(pointse), pointse);
 			drawPointsch(pointse);
 		}
 		else
@@ -242,7 +242,7 @@ void GLWidget::paintGL()
 				points[i].coord.setZ((i + 1) * 2);
 				t.push_back(points[i].coord);
 			}
-			drawConvexHull(ch.process(t), points);
+			drawConvexHull(ch.calculate(t), points);
 		}
 	}
 
