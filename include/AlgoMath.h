@@ -8,18 +8,6 @@ static int globalId = 0;
 static int globalSideId = 0;
 static int globalFaceId = 0;
 
-
-#include <iostream>
-#include <cmath>
-#include <cstring>
-#include <cstdlib>
-#include <cstdio>
-#include <cassert>
-
-#define MAXN 1010
-
-typedef long long vtype;
-
 struct Point
 {
 	int id;
@@ -99,8 +87,6 @@ struct Side
 	bool operator!=(const Side& e) { return !(this->operator==(e)); }
 };
 
-//static list<Side>  _convexHull;
-
 struct Face
 {
 	int id;
@@ -156,30 +142,27 @@ vector<Side> getIncidentEdgesOriented(Point P, vector<Side> sides, vector<Point>
 vector<Face> getIncidentFacesOriented(vector<Side> La1, vector<Face> faces, vector<Side> sides, vector<Side> &La2);
 int mutualPoint(Side S1, Side S2);
 int findPointConvexDelaunay(bool closedPoly, vector<Side> La2, vector<Point> pts, QVector3D P, Point &S1, Point &S2);
-
+vector<Side> getViewedEdges(vector<Side> sides, vector<Point> pts, Point P); // methode utilisant les id
+void Delaunay_addPoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &faces, QVector3D P);
+void Delaunay_deletePoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &faces, int deleteID);
 
 vector<Point> EnvelopeJarvis(vector<Point> pts);
 bool Collinear(QVector3D v1, QVector3D v2);
 bool insideTriangle(QVector3D pt, QVector3D v1, QVector3D v2, QVector3D v3);
 bool insideCircumCircle(QVector3D pt, QVector3D v1, QVector3D v2, QVector3D v3);
 QVector3D circumCircleCenter(QVector3D v1, QVector3D v2, QVector3D v3);
-vector<Side> getViewedEdges(vector<Side> sides, vector<Point> pts, Point P); // methode utilisant les id
-void Delaunay_addPoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &faces, QVector3D P);
-void Delaunay_deletePoint(vector<Point> &pts, vector<Side> &sides, vector<Face> &faces, int deleteID);
 
-//===========================================================================================================
+//--------------------- TriangulationSimple ------------------------------------------------------------
 int getPointIndex(vector<Point> pts, int id);
 int getSideIDFromPoints(vector<Side> s, Point x, Point y);
-//int getSideFromID(vector<Side> s, int id);
-//vector<Side> FindExternSides();
-//bool checkVisibilitySide(Side side, Point p);
 vector<Face> TriangulationSimple(vector<Point> pts, list<Side> &_convexHull);
 
+//--------------------- Graham Scan --------------------------------------------------------
 int getPointIndex(vector<Point> pts, int id);
-//vector<Side> GrahamScan(vector<Point> pts);
 vector<Point> GrahamScan(vector<Point> pts);
 vector<Side> getViewedEdge(int nextIdVert, vector<Point> pts, list<Side> &convexHull);
 
+//--------------------- Flipping et Voronoi --------------------------------------------------------
 bool isEdgeViewed(QVector3D P, QVector3D A, QVector3D B, QVector3D n);
 QVector3D crossProductNormalized(QVector3D p, QVector3D op);
 vector<Side> Flipping(vector<Face> faces);
@@ -188,67 +171,28 @@ bool inCircumCircle(Face f, QVector3D v);
 vector<Point> Voronoi(vector<Point> pts);
 QVector3D CircumCircleCenter(Face f);
 
+//---------------------------------------- Enveloppe convexe 3D -------------------------------------------------------
+static vector<QVector3D> cloudPoints;
 
-/* Basic 3D vector implementation */
-struct vec3 {
-	vec3() { X[0] = X[1] = X[2] = 0; }
-	vec3(vtype x, vtype y, vtype z) { X[0] = x; X[1] = y; X[2] = z; }
-
-	/* 3D cross product */
-	vec3 operator*(const vec3& v) const {
-		return vec3(X[1] * v.X[2] - X[2] * v.X[1],
-			X[2] * v.X[0] - X[0] * v.X[2],
-			X[0] * v.X[1] - X[1] * v.X[0]);
-	}
-
-	vec3 operator-(const vec3& v) const {
-		return vec3(X[0] - v.X[0], X[1] - v.X[1], X[2] - v.X[2]);
-	}
-
-	vec3 operator-() const {
-		return vec3(-X[0], -X[1], -X[2]);
-	}
-
-	vtype dot(const vec3& v) const {
-		return X[0] * v.X[0] + X[1] * v.X[1] + X[2] * v.X[2];
-	}
-
-	vtype X[3];
-};
-
-
-struct face {
-	vec3 norm;
-	vtype disc;
-	int I[3];
-};
-
-vector<face> convexHull3D(vector<Point> pts);
-
-
-static vector<QVector3D> fpoints;
-
-struct Face2
+struct Face3D
 {
-	int i0, i1, i2;
+	int index0, index1, index2;
 	float a, b, c, d;
 
-	Face2(int i0o, int i1o, int i2o)
+	Face3D(int id0, int id1, int id2)
 	{
+		index0 = id0;
+		index1 = id1;
+		index2 = id2;
 
-		i0 = i0o;
-		i1 = i1o;
-		i2 = i2o;
-
-		computePlane();
-
+		recalculFace();
 	}
 
-	void computePlane()
+	void recalculFace()
 	{
-		QVector3D v1 = fpoints[i0];
-		QVector3D v2 = fpoints[i1];
-		QVector3D v3 = fpoints[i2];
+		QVector3D v1 = cloudPoints[index0];
+		QVector3D v2 = cloudPoints[index1];
+		QVector3D v3 = cloudPoints[index2];
 
 		a = v1.y() * (v2.z() - v3.z()) + v2.y() * (v3.z() - v1.z()) + v3.y() * (v1.z() - v2.z());
 		b = v1.z() * (v2.x() - v3.x()) + v2.z() * (v3.x() - v1.x()) + v3.z() * (v1.x() - v2.x());
@@ -258,172 +202,134 @@ struct Face2
 
 	bool isVisible(QVector3D p)
 	{
-
 		return (a * p.x() + b * p.y() + c * p.z() + d) > 0;
-
 	}
 
 	QVector3D centroid()
 	{
-
-		QVector3D p0 = fpoints[i0];
-		QVector3D p1 = fpoints[i1];
-		QVector3D p2 = fpoints[i2];
+		QVector3D p0 = cloudPoints[index0];
+		QVector3D p1 = cloudPoints[index1];
+		QVector3D p2 = cloudPoints[index2];
 		return QVector3D((p0.x() + p1.x() + p2.x()) / 3, (p0.y() + p1.y() + p2.y()) / 3, (p0.z() + p1.z() + p2.z()) / 3);
-
 	}
 
 	void flip()
 	{
-		int t = i0;
-		i0 = i1;
-		i1 = t;
-		computePlane();
+		int t = index0;
+		index0 = index1;
+		index1 = t;
+		recalculFace();
 	}
 
 };
 
 struct ConvexHull
 {
-	vector<Face2> validFaces;
-	vector<Face2>  visibleFaces;
-	vector<Face2>  tmpFaces;
+	// Structures de base
+	vector<Face3D> validFaces;
+	vector<Face3D>  viewFaces;
+	vector<Face3D>  tmpFaces;
 
-	QVector3D centroid(vector<QVector3D> points, int index, Face2 face)
+	// Calcul du centre des points
+	QVector3D centroid(vector<QVector3D> points, int index, Face3D face)
 	{
-
 		QVector3D p = points[index];
-		QVector3D p0 = points[face.i0];
-		QVector3D p1 = points[face.i1];
-		QVector3D p2 = points[face.i2];
+		QVector3D p0 = points[face.index0];
+		QVector3D p1 = points[face.index1];
+		QVector3D p2 = points[face.index2];
 		return QVector3D((p.x() + p0.x() + p1.x() + p2.x()) / 4, (p.y() + p0.y() + p1.y() + p2.y()) / 4, (p.z() + p0.z() + p1.z() + p2.z()) / 4);
-
 	}
 
-	vector<int> process(vector<QVector3D> points)
+	vector<int> calculate(vector<QVector3D> points)
 	{
 		vector<int> result;
-
 		if (points.size() < 4)
 		{
 			return result;
 		}
 
-		//local copy of the point set
-		//vertices = .concat();
-		//Face2.points = points;
-		fpoints = points;
+		// Référence pour les faces
+		cloudPoints = points;
 
-
-		//calculates the first convex tetrahedron
-
-		//creates a face with the first 3 vertices
-		Face2 face(0, 1, 2);
-
-		//this is the center of the tetrahedron, all face should point outwards:
-		//they should not be visible to the centroid
+		// Calcul du tetrahedron
+		Face3D face(0, 1, 2);
 		QVector3D v = centroid(points, 3, face);
-
 		if (face.isVisible(v)) face.flip();
-
-		Face2 face0 = Face2(3, face.i0, face.i1);
+		Face3D face0 = Face3D(3, face.index0, face.index1);
 		if (face0.isVisible(v)) face0.flip();
-
-		Face2 face1 = Face2(3, face.i1, face.i2);
+		Face3D face1 = Face3D(3, face.index1, face.index2);
 		if (face1.isVisible(v)) face1.flip();
-
-		Face2 face2 = Face2(3, face.i2, face.i0);
+		Face3D face2 = Face3D(3, face.index2, face.index0);
 		if (face2.isVisible(v)) face2.flip();
 
 
-		//store the tetrahedron faces in the valid faces list
-		vector<Face2> validFaces;
-		validFaces.push_back(face);
-		validFaces.push_back(face0);
-		validFaces.push_back(face1);
-		validFaces.push_back(face2);
+		// Enregistrement des faces du tetrahedron comme faces valides
+		vector<Face3D> trueFaces;
+		trueFaces.push_back(face);
+		trueFaces.push_back(face0);
+		trueFaces.push_back(face1);
+		trueFaces.push_back(face2);
 
-		visibleFaces.clear();
+		viewFaces.clear();
 		tmpFaces.clear();
 
-
-
-		//so as we have a convex tetrahedron, we can skip the first 4 points
+		// Parcourt des points
 		for (int i = 4; i < points.size(); i++)
 		{
-			//for each avaiable vertices
 			v = points[i];
-
-			//checks the point's visibility from all faces
-			visibleFaces.clear();
-			for each(face in validFaces)
+			viewFaces.clear();
+			for each(face in trueFaces)
 			{
 				if (face.isVisible(v))
 				{
-					visibleFaces.push_back(face);
+					viewFaces.push_back(face);
 				}
 			}
 
-			//the vertex is not visible : it is inside the convex hull, keep on
-			if (visibleFaces.size() == 0)
+			if (viewFaces.size() == 0)
 			{
 				continue;
 			}
 
-			//the vertex is outside the convex hull
-			//delete all visible faces from the valid List
-			for each (face in visibleFaces)
+			// Suppression des faces visibles des faces valides
+			for each (face in viewFaces)
 			{
-				//int pos = find(validFaces.begin(), validFaces.end(), face) - validFaces.begin();
-				//vector<int> index;
 				int index;
-				for (int y = 0; y < validFaces.size(); y++)
+				for (int y = 0; y < trueFaces.size(); y++)
 				{
-					if (validFaces[y].i0 == face.i0 && validFaces[y].i1 == face.i1 && validFaces[y].i2 == face.i2) {
-						//index.push_back(y);
+					if (trueFaces[y].index0 == face.index0 && trueFaces[y].index1 == face.index1 && trueFaces[y].index2 == face.index2) {
 						index = y;
 						break;
 					}
 				}
-				/*int offeset = 0;
-				for (int y = 0; y < index.size(); y++)
-				{
-					validFaces.erase(validFaces.begin() + y- offeset);
-					offeset++;
-				}*/
-				validFaces.erase(validFaces.begin() + index);
-				//validFaces.splice(validFaces.indexOf(face), 1);
+				trueFaces.erase(trueFaces.begin() + index);
 			}
 
-			//special case : only one face is visible
-			//it's ok to create 3 faces directly for they won't enclose any other point
-			if (visibleFaces.size() == 1)
+			if (viewFaces.size() == 1)
 			{
-				face = visibleFaces[0];
-				validFaces.push_back(Face2(i, face.i0, face.i1));
-				validFaces.push_back(Face2(i, face.i1, face.i2));
-				validFaces.push_back(Face2(i, face.i2, face.i0));
+				face = viewFaces[0];
+				trueFaces.push_back(Face3D(i, face.index0, face.index1));
+				trueFaces.push_back(Face3D(i, face.index1, face.index2));
+				trueFaces.push_back(Face3D(i, face.index2, face.index0));
 				continue;
 			}
 
-			//creates all possible new faces from the visibleFaces
 			tmpFaces.clear();
-			for each(face in visibleFaces)
+			// Calcul de toutes les faces possibles
+			for each(face in viewFaces)
 			{
-				tmpFaces.push_back(Face2(i, face.i0, face.i1));
-				tmpFaces.push_back(Face2(i, face.i1, face.i2));
-				tmpFaces.push_back(Face2(i, face.i2, face.i0));
+				tmpFaces.push_back(Face3D(i, face.index0, face.index1));
+				tmpFaces.push_back(Face3D(i, face.index1, face.index2));
+				tmpFaces.push_back(Face3D(i, face.index2, face.index0));
 			}
 
-			//Face2 other(0, 0, 0);
 			for each(face in tmpFaces)
 			{
-				//search if there is a point in front of the face : 
-				//this means the face doesn't belong to the convex hull
+				// Recherche des faces qui ne croiseraient pas l'enveloppe convexe
 				bool search = false;
-				for each(Face2 other in tmpFaces)
+				for each(Face3D other in tmpFaces)
 				{
-					if (face.i0 != other.i0 || face.i1 != other.i1 || face.i2 != other.i2)
+					if (face.index0 != other.index0 || face.index1 != other.index1 || face.index2 != other.index2)
 					{
 						if (face.isVisible(other.centroid()))
 						{
@@ -432,16 +338,16 @@ struct ConvexHull
 						}
 					}
 				}
-				//the face has no point in front of it
-				if (!search) validFaces.push_back(face);
+				if (!search) trueFaces.push_back(face);
 			}
 		}
 
-		for each(face in validFaces)
+		// Ajout des faces correctes
+		for each(face in trueFaces)
 		{
-			result.push_back(face.i0);
-			result.push_back(face.i1);
-			result.push_back(face.i2);
+			result.push_back(face.index0);
+			result.push_back(face.index1);
+			result.push_back(face.index2);
 		}
 		return result;
 	}

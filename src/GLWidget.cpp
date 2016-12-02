@@ -49,7 +49,6 @@ void GLWidget::initializeGL()
 	glDepthFunc(GL_LEQUAL);
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	range = 100.0;
-
 	resetPoints3D();
 }
 
@@ -189,7 +188,7 @@ void GLWidget::paintGL()
 			{
 				move3DPoints(point3D);
 			}
-			drawConvexHull(ch.process(point3D), point3D);
+			drawConvexHull(ch.calculate(point3D), point3D);
 			drawPointsch(point3D);
 		}
 		else
@@ -200,7 +199,7 @@ void GLWidget::paintGL()
 				points[i].coord.setZ((i + 1) * 2);
 				t.push_back(points[i].coord);
 			}
-			drawConvexHull(ch.process(t), points);
+			drawConvexHull(ch.calculate(t), points);
 		}
 	}
 	glPopMatrix();
@@ -597,7 +596,7 @@ void GLWidget::resetPoints3D()
 	int i = 100;
 	while (i--)
 		point3D.push_back(randomVector(size));
-	indices = ch.process(point3D);
+	indices = ch.calculate(point3D);
 }
 
 // A AJOUTER
